@@ -3,7 +3,7 @@ project:
   output-dir: docs
 
 website:
-  title: "causalestimators"
+  title: "Description"
   navbar:
     left:
       - href: index.qmd
