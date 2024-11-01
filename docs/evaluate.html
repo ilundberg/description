@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Evaluate Models – causalestimators</title>
+<title>Evaluate Models – Description</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -142,7 +142,7 @@ window.Quarto = {
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
     <a class="navbar-brand" href="./index.html">
-    <span class="navbar-title">causalestimators</span>
+    <span class="navbar-title">Description</span>
     </a>
   </div>
             <div id="quarto-search" class="" title="Search"></div>
@@ -290,8 +290,8 @@ dbl (5): year, age, meanlog, sdlog, weight
 <pre><code># A tibble: 2 × 5
   sex      age estimate model_name sample_size
   &lt;chr&gt;  &lt;dbl&gt;    &lt;dbl&gt; &lt;chr&gt;            &lt;int&gt;
-1 female    30   30274. linear             100
-2 male      30   51442. linear             100</code></pre>
+1 female    30   35102. linear             100
+2 male      30   46860. linear             100</code></pre>
 </div>
 </div>
 </section>
@@ -447,12 +447,12 @@ dbl (5): year, age, meanlog, sdlog, weight
 <pre><code># A tibble: 3 × 2
   model_name   mse
   &lt;chr&gt;      &lt;dbl&gt;
-1 flat       0.441
-2 linear     0.457
-3 quadratic  0.433</code></pre>
+1 flat       0.619
+2 linear     0.618
+3 quadratic  0.655</code></pre>
 </div>
 </div>
-<p>Our split-sample procedure estimates that the quadratic model has the best performance!</p>
+<p>Our split-sample procedure estimates that the linear model has the best performance!</p>
 </section>
 <section id="difficulties-in-split-sample-model-evaluation" class="level2">
 <h2 class="anchored" data-anchor-id="difficulties-in-split-sample-model-evaluation">Difficulties in split-sample model evaluation</h2>
