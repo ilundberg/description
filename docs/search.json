@@ -1,0 +1,492 @@
+[
+  {
+    "objectID": "simulate.html",
+    "href": "simulate.html",
+    "title": "Generate Data",
+    "section": "",
+    "text": "The code below will generate a dataset of \\(n = 100\\) observations. Each observation contains several observed variables:\n\nL1 A numeric confounder\nL2 A numeric confounder\nA A binary treatment\nY A numeric outcome\n\nEach observation also contains outcomes that we know only because the data are simulated. These variables are useful as ground truth in simulations.\n\npropensity_score The true propensity score \\(P(A = 1 \\mid \\vec{L})\\)\nY0 The potential outcome under control\nY1 The potential outcome under treatment\n\nTo run this code, you will need the dplyr package. If you don’t have it, first run the line install.packages(\"dplyr\") in your R console.\n\nlibrary(dplyr)\n\n\nAttaching package: 'dplyr'\n\n\nThe following objects are masked from 'package:stats':\n\n    filter, lag\n\n\nThe following objects are masked from 'package:base':\n\n    intersect, setdiff, setequal, union\n\nn &lt;- 100\ndata &lt;- tibble(L1 = rnorm(n),\n               L2 = rnorm(n)) |&gt;\n  # Generate potential outcomes as functions of L\n  mutate(Y0 = rnorm(n(), mean = L1 + L2, sd = 1),\n         Y1 = rnorm(n(), mean = Y0 + 1, sd = 1)) |&gt;\n  # Generate treatment as a function of L\n  mutate(propensity_score = plogis(-2 + L1 + L2)) |&gt;\n  mutate(A = rbinom(n(), 1, propensity_score)) |&gt;\n  # Generate factual outcome\n  mutate(Y = case_when(A == 0 ~ Y0,\n                       A == 1 ~ Y1))\n\nA simulation is nice because the answer is known. In this simulation, the conditional average causal effect of A on Y equals 1 at any value of L1 and L_2."
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Description: Using models to describe",
+    "section": "",
+    "text": "This page introduces an ongoing collaborative project by Ian Lundberg and Kristin Liao at UCLA.\nDescriptive research summarizes the world as it exists. Description may not require a model—the mean of an outcome in a simple random sample can be a powerful form of description. This tutorial first considers model-free description and then pivots to a view of model-based description.\nWe take a \\(\\hat{Y}\\) view as opposed to a \\(\\hat\\beta\\) view of model-based description. This view is in some sense both radical and conventional.\nBecause our view pushes beyond \\(\\hat\\beta\\), an additional upside is that it opens the door to machine learning estimators for description that may not be parameterized by coefficients."
+  },
+  {
+    "objectID": "data.html",
+    "href": "data.html",
+    "title": "Simulate Data",
+    "section": "",
+    "text": "The code below will generate a dataset of \\(n = 100\\) observations. Each observation contains several observed variables:\n\nL1 A numeric confounder\nL2 A numeric confounder\nA A binary treatment\nY A numeric outcome\n\nEach observation also contains outcomes that we know only because the data are simulated. These variables are useful as ground truth in simulations.\n\npropensity_score The true propensity score \\(P(A = 1 \\mid \\vec{L})\\)\nY0 The potential outcome under control\nY1 The potential outcome under treatment\n\nTo run this code, you will need the dplyr package. If you don’t have it, first run the line install.packages(\"dplyr\") in your R console. Then, add this line to your R script to load the package.\n\nlibrary(dplyr)\n\nIf you want your simulation to match our numbers exactly, add a line to set your seed.\n\nset.seed(90095)\n\n\nn &lt;- 500\ndata &lt;- tibble(\n  L1 = rnorm(n),\n  L2 = rnorm(n)\n) |&gt;\n  # Generate potential outcomes as functions of L\n  mutate(Y0 = rnorm(n(), mean = L1 + L2, sd = 1),\n         Y1 = rnorm(n(), mean = Y0 + 1, sd = 1)) |&gt;\n  # Generate treatment as a function of L\n  mutate(propensity_score = plogis(-2 + L1 + L2)) |&gt;\n  mutate(A = rbinom(n(), 1, propensity_score)) |&gt;\n  # Generate factual outcome\n  mutate(Y = case_when(A == 0 ~ Y0,\n                       A == 1 ~ Y1))\n\nA simulation is nice because the answer is known. In this simulation, the conditional average causal effect of A on Y equals 1 at any value of L1 and L_2."
+  },
+  {
+    "objectID": "outcomemodeling.html",
+    "href": "outcomemodeling.html",
+    "title": "Outcome Modeling",
+    "section": "",
+    "text": "Because the causal effect of A on Y is identified by adjusting for the confounders L1 and L2, we can estimate by outcome modeling.\nThe code below assumes you have generated data as on the data page."
+  },
+  {
+    "objectID": "outcomemodeling.html#model",
+    "href": "outcomemodeling.html#model",
+    "title": "Outcome Modeling",
+    "section": "1) Model",
+    "text": "1) Model\nThe code below uses Ordinary Least Squares to estimate an outcome model.\n\nmodel &lt;- lm(Y ~ A*(L1 + L2), data = data)\n\n\n\n\nCall:\nlm(formula = Y ~ A * (L1 + L2), data = data)\n\nResiduals:\n    Min      1Q  Median      3Q     Max \n-4.1448 -0.7105  0.0097  0.6998  3.1743 \n\nCoefficients:\n            Estimate Std. Error t value Pr(&gt;|t|)    \n(Intercept)  0.01606    0.05699   0.282  0.77827    \nA            1.11555    0.18021   6.190 1.26e-09 ***\nL1           1.06333    0.05938  17.907  &lt; 2e-16 ***\nL2           1.11199    0.05951  18.685  &lt; 2e-16 ***\nA:L1        -0.39475    0.14279  -2.765  0.00591 ** \nA:L2        -0.28935    0.13940  -2.076  0.03844 *  \n---\nSignif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1\n\nResidual standard error: 1.111 on 494 degrees of freedom\nMultiple R-squared:  0.6732,    Adjusted R-squared:  0.6699 \nF-statistic: 203.6 on 5 and 494 DF,  p-value: &lt; 2.2e-16\n\n\nWe chose a model where treatment A is interacted with an additive function of confounders L1 + L2. This is also known as a t-learner (Kunzel et al. 2019) because it is equivalent to estimating two separate regression models of outcome on confounders, one among those for whom A == 1 and among those for whom A == 0."
+  },
+  {
+    "objectID": "outcomemodeling.html#predict",
+    "href": "outcomemodeling.html#predict",
+    "title": "Outcome Modeling",
+    "section": "2) Predict",
+    "text": "2) Predict\nThe code below predicts the conditional average potential outcome under treatment and control at the confounder values of each observation.\nFirst, we create data with A set to the value 1.\n\ndata_1 &lt;- data |&gt;\n  mutate(A = 1)\n\n\n\n# A tibble: 500 × 7\n        L1     L2      Y0    Y1 propensity_score     A       Y\n     &lt;dbl&gt;  &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt;            &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;\n1  0.00304  1.03   0.677   1.59          0.276       1  0.677 \n2 -2.35    -1.66  -4.09   -3.53          0.00244     1 -4.09  \n3  0.104   -0.912  0.0659  1.31          0.0569      1  0.0659\n# ℹ 497 more rows\n\n\nThen, we create data with A set to the value 0.\n\ndata_0 &lt;- data |&gt;\n  mutate(A = 0)\n\n\n\n# A tibble: 500 × 7\n        L1     L2      Y0    Y1 propensity_score     A       Y\n     &lt;dbl&gt;  &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt;            &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;\n1  0.00304  1.03   0.677   1.59          0.276       0  0.677 \n2 -2.35    -1.66  -4.09   -3.53          0.00244     0 -4.09  \n3  0.104   -0.912  0.0659  1.31          0.0569      0  0.0659\n# ℹ 497 more rows\n\n\nWe use our outcome model to predict the conditional mean of the potential outcome under each scenario.\n\npredicted &lt;- data |&gt;\n  mutate(\n    Y1_predicted = predict(model, newdata = data_1),\n    Y0_predicted = predict(model, newdata = data_0),\n    effect_predicted = Y1_predicted - Y0_predicted\n  )\n\n\n\n# A tibble: 500 × 10\n        L1     L2      Y0    Y1 propensity_score     A       Y Y1_predicted\n     &lt;dbl&gt;  &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt;            &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt;        &lt;dbl&gt;\n1  0.00304  1.03   0.677   1.59          0.276       0  0.677         1.98 \n2 -2.35    -1.66  -4.09   -3.53          0.00244     0 -4.09         -1.81 \n3  0.104   -0.912  0.0659  1.31          0.0569      0  0.0659        0.451\n# ℹ 497 more rows\n# ℹ 2 more variables: Y0_predicted &lt;dbl&gt;, effect_predicted &lt;dbl&gt;"
+  },
+  {
+    "objectID": "outcomemodeling.html#aggregate",
+    "href": "outcomemodeling.html#aggregate",
+    "title": "Outcome Modeling",
+    "section": "3) Aggregate",
+    "text": "3) Aggregate\nThe final step is to aggregate to an average causal effect estimate.\n\naggregated &lt;- predicted |&gt;\n  summarize(average_effect_estimate = mean(effect_predicted))\n\n\n\n# A tibble: 1 × 1\n  average_effect_estimate\n                    &lt;dbl&gt;\n1                    1.13"
+  },
+  {
+    "objectID": "outcomemodeling.html#closing-thoughts",
+    "href": "outcomemodeling.html#closing-thoughts",
+    "title": "Outcome Modeling",
+    "section": "Closing thoughts",
+    "text": "Closing thoughts\nOutcome modeling is a powerful strategy because it bridges nonparametric causal identification to longstanding strategies where outcomes are modeled by parametric regression.\nHere are a few things you could try next:\n\nreplace step (1) with another approach to estimate conditional mean outcomes, such as a different functional form or a machine learning method\nevaluate performance over many repeated simulations\nevaluate performance at different simulated sample sizes"
+  },
+  {
+    "objectID": "weighting.html",
+    "href": "weighting.html",
+    "title": "Inverse Probability of Treatment Weighting",
+    "section": "",
+    "text": "Because the causal effect of A on Y is identified by adjusting for the confounders L1 and L2, we can estimate by inverse probability of treatment weighting.\nThe code below assumes you have generated data as on the data page."
+  },
+  {
+    "objectID": "matching.html",
+    "href": "matching.html",
+    "title": "Matching",
+    "section": "",
+    "text": "Because the causal effect of A on Y is identified by adjusting for the confounders L1 and L2, we can estimate by matching treated and untreated units with similar values of these confounders.\nThere are many methods for matching. The code below walks through the particular case of propensity score matching.\nThe code below assumes you have generated data as on the data page."
+  },
+  {
+    "objectID": "weighting.html#model",
+    "href": "weighting.html#model",
+    "title": "Inverse Probability of Treatment Weighting",
+    "section": "1) Model",
+    "text": "1) Model\nThe code below uses logistic regression to model the conditional probability of treatment.\n\nmodel &lt;- glm(\n  A ~ L1 + L2, \n  data = data, \n  family = binomial\n)\n\n\n\n\nCall:\nglm(formula = A ~ L1 + L2, family = binomial, data = data)\n\nCoefficients:\n            Estimate Std. Error z value Pr(&gt;|z|)    \n(Intercept)  -2.0740     0.1737 -11.938  &lt; 2e-16 ***\nL1            1.0845     0.1639   6.618 3.65e-11 ***\nL2            1.1877     0.1548   7.673 1.68e-14 ***\n---\nSignif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1\n\n(Dispersion parameter for binomial family taken to be 1)\n\n    Null deviance: 474.41  on 499  degrees of freedom\nResidual deviance: 354.86  on 497  degrees of freedom\nAIC: 360.86\n\nNumber of Fisher Scoring iterations: 5"
+  },
+  {
+    "objectID": "weighting.html#predict",
+    "href": "weighting.html#predict",
+    "title": "Inverse Probability of Treatment Weighting",
+    "section": "2) Predict",
+    "text": "2) Predict\nThe code below predicts the conditional probability of each unit’s observed treatment value, also known as the propensity score.\n\npredicted &lt;- data |&gt;\n  # Predict the probabilities that A = 1 and A = 0\n  mutate(\n    p_A_equals_1 = predict(model, type = \"response\"),\n    p_A_equals_0 = 1 - p_A_equals_1\n  ) |&gt;\n  # Assign the propensity score based on the observed treatment\n  mutate(\n    pi = case_when(\n      A == 1 ~ p_A_equals_1,\n      A == 0 ~ p_A_equals_0\n    )\n  )\n\n\n\n# A tibble: 500 × 10\n        L1     L2      Y0    Y1 propensity_score     A       Y p_A_equals_1\n     &lt;dbl&gt;  &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt;            &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt;        &lt;dbl&gt;\n1  0.00304  1.03   0.677   1.59          0.276       0  0.677       0.300  \n2 -2.35    -1.66  -4.09   -3.53          0.00244     0 -4.09        0.00136\n3  0.104   -0.912  0.0659  1.31          0.0569      0  0.0659      0.0455 \n# ℹ 497 more rows\n# ℹ 2 more variables: p_A_equals_0 &lt;dbl&gt;, pi &lt;dbl&gt;"
+  },
+  {
+    "objectID": "weighting.html#aggregate",
+    "href": "weighting.html#aggregate",
+    "title": "Inverse Probability of Treatment Weighting",
+    "section": "3) Aggregate",
+    "text": "3) Aggregate\nThe final step is to aggregate to an average causal effect estimate.\n\naggregated_Y1 &lt;- predicted |&gt;\n  # Restrict to cases with A == 1\n  filter(A == 1) |&gt;\n  # Calculate the weighted mean outcome\n  summarize(estimate = weighted.mean(Y, w = 1 / pi))\n\naggregated_Y0 &lt;- predicted |&gt;\n  # Restrict to cases with A == 1\n  filter(A == 0) |&gt;\n  # Calculate the weighted mean outcome\n  summarize(estimate = weighted.mean(Y, w = 1 / pi))\n\naverage_effect_estimate &lt;- aggregated_Y1 - aggregated_Y0\n\n\n\n  estimate\n1 1.288555"
+  },
+  {
+    "objectID": "weighting.html#closing-thoughts",
+    "href": "weighting.html#closing-thoughts",
+    "title": "Inverse Probability of Treatment Weighting",
+    "section": "Closing thoughts",
+    "text": "Closing thoughts\nInverse probability of treatment weighting is a powerful strategy because it bridges nonparametric causal identification to longstanding strategies from survey sampling where units from a population are sampled with known probabilities of inclusion. The analogy is that outcomes under treatment are sampled with estimated inclusion probabilities (the probability of treatment). Just as in a population sample we would need to think carefully about the probability of sampling, treatment modeling encourages us to model the probability of receiving the observed treatment.\nHere are a few things you could try next:\n\nreplace step (1) with another approach to estimate conditional treatment probabilities, such as a different functional form or a machine learning method\nevaluate performance over many repeated simulations\nevaluate performance at different simulated sample sizes"
+  },
+  {
+    "objectID": "matching.html#target-population",
+    "href": "matching.html#target-population",
+    "title": "Matching",
+    "section": "1) Target population",
+    "text": "1) Target population\nWhile the target population is relevant to all causal estimands and estimators, it is especially apparent when matching. One might choose\n\naverage treatment effect (ATE): the average over all units\naverage treatment effect on the treated (ATT): the average effect among units who received the treatment\naverage treatment effect on the control (ATC): the average effect among units who did not receive the treatment\n\nWe will focus on the ATT, which means we will take each treated unit and seek to find a matching control unit with similar values of the confounders. If we instead studied the ATC, we would take each control unit and seek to find a matching treated unit with similar values of the confounders. The ATT and ATC will generally be different to the degree that effects and treatment probabilities both vary across values of the confounders."
+  },
+  {
+    "objectID": "matching.html#distance-metric",
+    "href": "matching.html#distance-metric",
+    "title": "Matching",
+    "section": "2) Distance metric",
+    "text": "2) Distance metric\nSuppose one unit has confounder values \\(\\{\\ell_1,\\ell_2\\}\\) and another unit has confounder value \\(\\{\\ell_1',\\ell_2'\\}\\). There are many ways to define the distance between these units.\n\nEuclidean distance: square root of sum of squared differences on each variable \\[d\\left(\\vec\\ell,\\vec\\ell'\\right) = \\sqrt{(\\ell_1 - \\ell_1')^2 + (\\ell_2 - \\ell_2')^2}\\]\nManhattan distance: sum of absolute difference on each variable \\[d\\left(\\vec\\ell,\\vec\\ell'\\right) = \\lvert\\ell_1 - \\ell_1'\\rvert + \\lvert\\ell_2 - \\ell_2'\\rvert\\]\nPropensity score distance: difference in the conditional probability of being treated \\[d\\left(\\vec\\ell,\\vec\\ell'\\right) = \\left\\lvert P\\left(A = 1\\mid L_1 = \\ell_1, L_2 = \\ell_2\\right) - P\\left(A = 1\\mid L_1 = \\ell_1', L_2 = \\ell_2'\\right)\\right\\rvert\\]"
+  },
+  {
+    "objectID": "matching.html#matching-method",
+    "href": "matching.html#matching-method",
+    "title": "Matching",
+    "section": "3) Matching method",
+    "text": "3) Matching method\nThere are many ways to match units given the distance metric.\n\nNumber of matches\n\nIn 1:1 matching, each treated unit is matched to one control unit\nIn 1:k matching, each treated unit is matched to k control units\nIn other varieties, the ratio is allowed to differ across units.\n\n\n\nSequence of matching\n\nGreedy matching begins with the first treated unit and finds the best control unit, removing it from the eligible pool. This control unit may be a good match for the second treated unit but is no longer available\nOptimal matching finds the optimal pairs over all the units, but is more compute-intensive"
+  },
+  {
+    "objectID": "matching.html#aggregate",
+    "href": "matching.html#aggregate",
+    "title": "Matching",
+    "section": "4) Aggregate",
+    "text": "4) Aggregate\nThe final step is to aggregate, with two main options\n\ndifference the mean \\(Y\\) among matched treated and control units\nmodel \\(Y\\) given treatment and confounders among the matched set\n\nWhile (a) is simpler, (b) is often preferred because it correct for differences in the confounder values that persist even after matching."
+  },
+  {
+    "objectID": "matching.html#code-illustration",
+    "href": "matching.html#code-illustration",
+    "title": "Matching",
+    "section": "Code illustration",
+    "text": "Code illustration\nThe MatchIt package is one way to implement various matching strategies. You can install with install.package(\"MatchIt\") in your R console.\n\nlibrary(MatchIt)\n\nThe code below uses MatchIt to conduct nearest-neighbor 1:1 propensity score matching.\n\nmatched &lt;- matchit(\n  A ~ L1 + L2,\n  data = data, \n  distance = \"glm\",\n  method = \"nearest\"\n)\n\nThe code below appends the matching weights to the data. Units with match_weight == 1 are matched, while those with match_weight == 0 are unmatched.\n\n# Append matching weights to the data\nwith_weights &lt;- data |&gt;\n  mutate(match_weight = matched$weights) |&gt;\n  select(A, L1, L2, Y, match_weight)\n\n\n\n# A tibble: 500 × 5\n       A       L1      L2       Y match_weight\n   &lt;int&gt;    &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;        &lt;dbl&gt;\n 1     0  0.00304  1.03    0.677             1\n 2     0 -2.35    -1.66   -4.09              0\n 3     0  0.104   -0.912   0.0659            0\n 4     0 -0.522    0.439   0.390             0\n 5     0 -1.18    -0.815  -2.14              0\n 6     0  0.477   -0.0314  0.396             0\n 7     0 -0.0607  -0.462  -1.96              0\n 8     0  0.987    0.426   2.27              1\n 9     0 -0.122   -0.564  -0.0581            0\n10     0 -1.34    -0.618  -2.73              0\n# ℹ 490 more rows\n\n\nThe code below estimates the ATT by OLS regression on the matched set.\n\nmodel &lt;- lm(\n  Y ~ A + L1 + L2,\n  data = with_weights,\n  weights = match_weight\n)\nsummary(model)\n\n\nCall:\nlm(formula = Y ~ A + L1 + L2, data = with_weights, weights = match_weight)\n\nWeighted Residuals:\n   Min     1Q Median     3Q    Max \n-4.150  0.000  0.000  0.000  3.297 \n\nCoefficients:\n            Estimate Std. Error t value Pr(&gt;|t|)    \n(Intercept)   0.2674     0.1641   1.630 0.104923    \nA             0.6716     0.1964   3.419 0.000779 ***\nL1            0.8176     0.1144   7.143 2.25e-11 ***\nL2            0.9689     0.1119   8.656 2.86e-15 ***\n---\nSignif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1\n\nResidual standard error: 1.311 on 178 degrees of freedom\nMultiple R-squared:  0.4097,    Adjusted R-squared:  0.3998 \nF-statistic: 41.18 on 3 and 178 DF,  p-value: &lt; 2.2e-16\n\n\nThe coefficient on the treatment A is an estiamte of the ATT."
+  },
+  {
+    "objectID": "matching.html#closing-thoughts",
+    "href": "matching.html#closing-thoughts",
+    "title": "Matching",
+    "section": "Closing thoughts",
+    "text": "Closing thoughts\nMatching is a powerful strategy because it bridges nonparametric causal identification to a concrete idea: match each treated unit to a similar unit that wasn’t treated.\nHere are a few things you could try next:\n\ntype ?matchit to learn about other arguments that could modify the distance metric or matching method\nevaluate performance over many repeated simulations\nevaluate performance at different simulated sample sizes"
+  },
+  {
+    "objectID": "intuition.html",
+    "href": "intuition.html",
+    "title": "Why model?",
+    "section": "",
+    "text": "We model because"
+  },
+  {
+    "objectID": "intuition.html#outcome-modeling",
+    "href": "intuition.html#outcome-modeling",
+    "title": "Why model?",
+    "section": "Outcome modeling",
+    "text": "Outcome modeling\nOne strategy is to estimate an outcome model for the conditional mean of the observed outcomes.\n\\[E(Y\\mid A, X) = \\alpha + \\beta X + \\gamma A\\]\nIn these data, we would estimate \\(\\hat\\alpha = 0\\), \\(\\hat\\beta = 1\\), and \\(\\hat\\gamma = 1\\). We could then predict the counterfactual outcomes."
+  },
+  {
+    "objectID": "intuition.html#inverse-probability-weighting",
+    "href": "intuition.html#inverse-probability-weighting",
+    "title": "Why model?",
+    "section": "Inverse probability weighting",
+    "text": "Inverse probability weighting\nAnother strategy is to consider the treated units as a sample of all units, drawn with unequal probabilities across confounder values. Likewise, for the control units. Just as in sampling we would weight by the inverse probability of sample inclusion, we can weight by the inverse probability of the observed treatment."
+  },
+  {
+    "objectID": "intuition.html#matching",
+    "href": "intuition.html#matching",
+    "title": "Why model?",
+    "section": "Matching",
+    "text": "Matching\nA third is to find for each unit a matched case that had the other treatment condition. We then impute the missing outcome value by the observed outcome of the matched case.\n\nMatching can be conceptualized as a special case of outcome modeling, where the outcome model is a nearest neighbor estimator."
+  },
+  {
+    "objectID": "intuition.html#what-to-do-next",
+    "href": "intuition.html#what-to-do-next",
+    "title": "Why model?",
+    "section": "What to do next",
+    "text": "What to do next\nNow that you have a conceptual idea of these strategies, move on to the next pages to practice them with simulated data."
+  },
+  {
+    "objectID": "index.html#model-free-description",
+    "href": "index.html#model-free-description",
+    "title": "Description: Using models to describe",
+    "section": "Model-free description",
+    "text": "Model-free description\nLet \\(Y\\) be the income of a randomly sampled person from our population. With a large sample, one could summarize the geometric mean of \\(Y\\) by a sample mean estimator.\n\\[\\widehat{\\text{GM}}(Y) = \\text{exp}\\left(\\frac{1}{n}\\sum_{i=1}^n \\text{log}(y_i)\\right)\\]\nWe next consider a subgroup summary: the geometric mean among female respondents age 30. Letting \\(\\vec{X}\\) denote the values of these two features for a randomly sampled person and \\(\\vec{x}\\) denoting the particular values of interest, we could estimate by the sample mean of the target subgroup.\n\\[\\widehat{GM}(Y\\mid\\vec{X} = \\vec{x}) = \\text{exp}\\left(\\frac{1}{n_\\vec{x}}\\sum_{i:\\vec{X}_i=\\vec{x}} \\text{log}(y_i)\\right)\\] where the sum is over people whose feature vector \\(\\vec{X}\\) equals the target value \\(\\vec{x}\\) (e.g., female respondents age 30) and the number of people in the subgroup is \\(n_{\\vec{x}}\\).\nSmall sample sizes become a problem for model-free subgroup description. Even in a large sample, there may be few female respondents who are 30 years old."
+  },
+  {
+    "objectID": "index.html#concrete-setting",
+    "href": "index.html#concrete-setting",
+    "title": "Description: Using models to describe",
+    "section": "Concrete setting",
+    "text": "Concrete setting\nUsing data from the 2010–2019 American Community Survey (ACS), we describe sex gaps in pay. We focus on the subgroup of adults ages 30–50 who worked for pay full-time (35+ hours per week) and for the full year (50+ weeks). Our outcome \\(Y\\) is annual wage and salary income. We summarize by the geometric mean (the exponentiated mean of log income), and we report the female / male ratio of geometric mean pay."
+  },
+  {
+    "objectID": "index.html#model-based-description",
+    "href": "index.html#model-based-description",
+    "title": "Description: Using models to describe",
+    "section": "Model-based description",
+    "text": "Model-based description\nIn a sample with very few 30-year-old female respondents, one might consider whether other respondents might be informative. Perhaps 31-year-old female respondents or 30-year-old male respondents provide data that could be informative about the pay of 30-year-old female respondents.\nFor us, a model is a tool to pool information from units outside the target subgroup in order to produce a better estimate within the target subgroup.\nFormally, let \\(\\hat{f}()\\) be a learned model: a function that maps a feature vector \\(\\vec{x}\\) to a predicted outcome \\(\\hat{f}(\\vec{x})\\). The predicted value is an estimate of some summary of the conditional distribution of \\(Y\\) among those with the feature set \\(\\vec{X} = \\vec{x}\\).\nFor example, we might fit a linear regression model for log income.\n\\[\\begin{aligned}\n&\\widehat{E}(\\text{log}(Y)\\mid \\vec{X} = \\vec{x}) \\\\&= \\vec{x}'\\hat{\\vec\\beta} \\\\&= \\hat\\beta_0 + \\hat\\beta_1(\\text{Female}) + \\hat\\beta_2(\\text{Age}) + \\hat\\beta_3(\\text{Female}\\times\\text{Age})\n\\end{aligned}\\]\nThe prediction function for geometric mean pay would then be the exponentiated value of predicted log pay.\n\\[\\widehat{\\text{GM}}(Y\\mid \\vec{X} = \\vec{x}) = \\hat{f}(\\vec{x}) = \\text{exp}(\\vec{x}'\\hat{\\vec\\beta})\\]"
+  },
+  {
+    "objectID": "index.html#the-choice",
+    "href": "index.html#the-choice",
+    "title": "Description: Using models to describe",
+    "section": "The choice",
+    "text": "The choice\nWe would prefer\n\nmodel-free description when there are enough cases\nmodel-based description when data are scarce\n\nas long as our model pools information effectively. Data can help us decide!\nWhat comes next:\n\nfirst generate some simulated data\nthen apply a model-free estimator\nthen apply an OLS model-based estimator\nthen apply a more flexible spline estimator"
+  },
+  {
+    "objectID": "intuition.html#generate-an-illustration-sample",
+    "href": "intuition.html#generate-an-illustration-sample",
+    "title": "Why model?",
+    "section": "Generate an illustration sample",
+    "text": "Generate an illustration sample\nThe code below will generate a sample of 100 respondents simulated to correspond to the target population in 2010 ages 30–50.\n\nsimulate_2010 &lt;- function(n = 100) {\n  read_csv(\"assets/truth.csv\") |&gt;\n    filter(year == 2010) |&gt;\n    slice_sample(n = 100, weight_by = weight, replace = T) |&gt;\n    mutate(income = exp(rnorm(n(), meanlog, sdlog))) |&gt;\n    select(year, age, sex, income)\n}\n\n\nsimulated &lt;- simulate_2010(n = 100)\n\n\n\n# A tibble: 100 × 4\n   year   age sex    income\n  &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;   &lt;dbl&gt;\n1  2010    47 female 42890.\n2  2010    30 male   59271.\n3  2010    30 male   41853.\n# ℹ 97 more rows\n\n\nIn our sample, there are only 3 units in our target subgroup! We could take the geometric mean pay among these units, but it is so few units.\n\nsimulated |&gt;\n  filter(age == 30 & sex == \"female\")\n\n# A tibble: 3 × 4\n   year   age sex    income\n  &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;   &lt;dbl&gt;\n1  2010    30 female 68358.\n2  2010    30 female 27055.\n3  2010    30 female 52269."
+  },
+  {
+    "objectID": "intuition.html#pool-information-by-a-model",
+    "href": "intuition.html#pool-information-by-a-model",
+    "title": "Why model?",
+    "section": "Pool information by a model",
+    "text": "Pool information by a model\nBecause these data are simulated, we actually know that a model of pay as a function of age can be quite accurate.\nIDEA: Predict at 45 pooled over all years. Show plot. Very bad line, good estimator at 45.\n\n\nRows: 420 Columns: 6\n── Column specification ────────────────────────────────────────────────────────\nDelimiter: \",\"\nchr (1): sex\ndbl (5): year, age, meanlog, sdlog, weight\n\nℹ Use `spec()` to retrieve the full column specification for this data.\nℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.\n\n\n\n\n\n\n\n\n\n\nWe assume causal identification given the confounder. The causal problem is to use the observed data to learn about the missing values."
+  },
+  {
+    "objectID": "evaluate_models.html",
+    "href": "evaluate_models.html",
+    "title": "Evaluate Models Across Many Samples",
+    "section": "",
+    "text": "Because this setting is simulated, we can carry out an exercise to evaluate the performance of the 3 models.\nSee the previous page for code to simulate a sample."
+  },
+  {
+    "objectID": "evaluate_models.html#estimator-functions",
+    "href": "evaluate_models.html#estimator-functions",
+    "title": "Evaluate Models Across Many Samples",
+    "section": "Estimator functions",
+    "text": "Estimator functions\nThe functions below is an estimator: it take data in and returns estimates. This function can be applied with the flat, linear, and quadratic models defiend on the previous page.\n\nestimator &lt;- function(\n    data, # from simulate()\n    model_name # one of \"flat\", \"linear\", \"quadratic\"\n) {\n  # Estimate a regression model\n  if (model_name == \"flat\") {\n    fit &lt;- lm(log(income) ~ sex, data = data)\n  } else if (model_name == \"linear\") {\n    fit &lt;- lm(log(income) ~ sex * age, data = data)\n  } else if (model_name == \"quadratic\") {\n    fit &lt;- lm(log(income) ~ sex * poly(age,2), data = data)\n  }\n  # Define x-values at which to make predictions\n  to_predict &lt;- tibble(\n    sex = c(\"female\",\"male\"),\n    age = c(30,30)\n  )\n  # Make predictions\n  predicted &lt;- to_predict |&gt;\n    mutate(estimate = predict(fit, newdata = to_predict)) |&gt;\n    # Transform from log scale to dollars scale\n    mutate(estimate = exp(estimate)) |&gt;\n    # Append information for summarizing later\n    mutate(\n      model_name = model_name,\n      sample_size = nrow(data)\n    )\n  # Return the predicted estimates\n  return(predicted)\n}\n\nAs an illustration, here is the linear estimator applied to a simulated sample\n\nsimulated &lt;- simulate(n = 100)\n\nRows: 420 Columns: 6\n── Column specification ────────────────────────────────────────────────────────\nDelimiter: \",\"\nchr (1): sex\ndbl (5): year, age, meanlog, sdlog, weight\n\nℹ Use `spec()` to retrieve the full column specification for this data.\nℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.\n\n\n\nestimator(data = simulated, model_name = \"linear\")\n\n# A tibble: 2 × 5\n  sex      age estimate model_name sample_size\n  &lt;chr&gt;  &lt;dbl&gt;    &lt;dbl&gt; &lt;chr&gt;            &lt;int&gt;\n1 female    30   36984. linear             100\n2 male      30   46889. linear             100"
+  },
+  {
+    "objectID": "evaluate_models.html#apply-estimators-in-repeated-samples",
+    "href": "evaluate_models.html#apply-estimators-in-repeated-samples",
+    "title": "Evaluate Models Across Many Samples",
+    "section": "Apply estimators in repeated samples",
+    "text": "Apply estimators in repeated samples\nHow do our estimators perform in repeated samples? In actual problems, one only has one sample. But we created this exercise so that we can use simulate() to simulate many samples from a known data generating process. The code below applies the estimator to many samples of size 100.\nWe first prepare for parallel computing.\n\nlibrary(foreach)\nlibrary(doParallel)\nlibrary(doRNG)\ncl &lt;- makeCluster(detectCores())\nregisterDoParallel(cl)\n\nThen we apply the estimator many times at each of a series of sample sizes.\n\nsimulations &lt;- foreach(\n  repetition = 1:1000, \n  .combine = \"rbind\", \n  .packages = \"tidyverse\"\n) %dorng% {\n  foreach(n_value = c(50,100,200,500,1000), .combine = \"rbind\") %do% {\n    # Simulate data\n    simulated &lt;- simulate(n = n_value)\n    # Apply the three estimators\n    flat &lt;- estimator(data = simulated, model_name = \"flat\")\n    linear &lt;- estimator(data = simulated, model_name = \"linear\")\n    quadratic &lt;- estimator(data = simulated, model_name = \"quadratic\")\n    # Return estimates\n    all_estimates &lt;- rbind(flat, linear, quadratic)\n    return(all_estimates)\n  }\n}"
+  },
+  {
+    "objectID": "evaluate_models.html#visualize-estimator-performance",
+    "href": "evaluate_models.html#visualize-estimator-performance",
+    "title": "Evaluate Models Across Many Samples",
+    "section": "Visualize estimator performance",
+    "text": "Visualize estimator performance\nFor simplicity, we first focus on one estimand and sample size: modeling the geometric mean of 30-year-old female incomes with a sample size of \\(n = 100\\). Despite having good performance in the population, the quadratic model has poor performance at this sample size because it has high variance!\n\n\n\n\n\n\n\n\n\nTo aggregate simulations to a summary score, we use mean squared error (MSE) on the scale of log incomes.\n\\[\\begin{aligned}\n\\theta(\\vec{x}) &= \\text{True geometric mean in subgroup }\\vec{x} \\\\\n\\hat\\theta_r(\\vec{x}) &= \\text{Estimated geometric mean in subgroup }\\vec{x}\\text{ in simulated sample }r \\\\\n\\widehat{\\text{MSE}}\\bigg(\\hat\\theta(\\vec{x})\\bigg) &= \\frac{1}{R}\\sum_{r=1}^R \\left(\\text{log}(\\hat\\theta) - \\text{log}(\\theta)\\right)^2\n\\end{aligned}\\]\nThe figure below reports MSE for each estimator at each sample size."
+  },
+  {
+    "objectID": "define_models.html",
+    "href": "define_models.html",
+    "title": "Why model?",
+    "section": "",
+    "text": "We model because"
+  },
+  {
+    "objectID": "define_models.html#generate-an-illustration-sample",
+    "href": "define_models.html#generate-an-illustration-sample",
+    "title": "Why model?",
+    "section": "Generate an illustration sample",
+    "text": "Generate an illustration sample\nThe code below will generate a sample of 100 respondents simulated to correspond to the target population ages 30–50 in 2010–2019.\n\nsimulate &lt;- function(n = 100) {\n  read_csv(\"assets/truth.csv\") |&gt;\n    slice_sample(n = n, weight_by = weight, replace = T) |&gt;\n    mutate(income = exp(rnorm(n(), meanlog, sdlog))) |&gt;\n    select(year, age, sex, income)\n}\n\n\nsimulated &lt;- simulate(n = 100)\n\n\n\n# A tibble: 100 × 4\n   year   age sex    income\n  &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;   &lt;dbl&gt;\n1  2019    36 male   63868.\n2  2018    43 male   65739.\n3  2012    46 female 43873.\n# ℹ 97 more rows"
+  },
+  {
+    "objectID": "define_models.html#target-estimand",
+    "href": "define_models.html#target-estimand",
+    "title": "Why model?",
+    "section": "Target estimand",
+    "text": "Target estimand\nWe will estimate three target quantities:\n\n\ngeometric mean pay among female respondents age 30\n\n\ngeometric mean pay among male respondents age 30\n\n\nratio (1) / (2)\n\n\nIn our sample, there are only 3 female and 2 male 30-year-olds! We will need a model."
+  },
+  {
+    "objectID": "define_models.html#models-for-illustration",
+    "href": "define_models.html#models-for-illustration",
+    "title": "Why model?",
+    "section": "Models for illustration",
+    "text": "Models for illustration\nWe consider a series of three models.\n\nFlat model: Geometric mean among everyone\nLinear model: Prediction from linear fit on age \\(\\times\\) sex\nQuadratic model: Prediction from quadratic fit on age \\(\\times\\) sex\n\nRecall that each model is a tool to share information from other cases in order to predict an estimate for the target subgroups: 30-year-old male and female respondents.\n\n\nRows: 420 Columns: 6\n── Column specification ────────────────────────────────────────────────────────\nDelimiter: \",\"\nchr (1): sex\ndbl (5): year, age, meanlog, sdlog, weight\n\nℹ Use `spec()` to retrieve the full column specification for this data.\nℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.\n`summarise()` has grouped output by 'sex'. You can override using the `.groups` argument.\n\n\n\n\n\n\n\n\n\nWe will use these models for a task: estimate the geometric mean pay among 30-year-old male and female respondents. We will carry out the task in a simulated sample of 100 respondents."
+  },
+  {
+    "objectID": "evaluate_models.html#conclusions",
+    "href": "evaluate_models.html#conclusions",
+    "title": "Evaluate Models Across Many Samples",
+    "section": "Conclusions",
+    "text": "Conclusions\nThe results indicate that\n\nin a small sample (\\(n = 50\\)), the flat model is best\nthe linear model becomes best\n\nat \\(n = 100\\) for the male subgroup\nat \\(n = 500\\) for the female subgroup\n\nthe quadratic model becomes best\n\nat \\(n = 1,000\\) in the male subgroup\nat some higher sample size in the female subgroup\n\n\nThere are two main conclusions from this illustration. Which estimator is best is a question that\n\ndepends on the estimand (male or female subgroup), and\ndepends on the sample size\n\nFurther, although the quadratic fit is best in the population (previous page), a very large sample size is needed before it is best in a sample. This is a reminder that more complex models do not necessarily outperform simpler models, especially in small samples."
+  },
+  {
+    "objectID": "simulate_a_sample.html",
+    "href": "simulate_a_sample.html",
+    "title": "Simulate Data",
+    "section": "",
+    "text": "This exercise works with simulated samples. Taking the nonparametric estimates from 5 million cases as the truth, you will generate a simulated sample of a much smaller size using the code below.\nPrepare the environment by loading the tidyverse package.\n\nlibrary(tidyverse)\n\nThe function below simulates a sample of 100 cases.\n\nsimulate &lt;- function(n = 100) {\n  read_csv(\"https://ilundberg.github.io/description/assets/truth.csv\") |&gt;\n    slice_sample(n = n, weight_by = weight, replace = T) |&gt;\n    mutate(income = exp(rnorm(n(), meanlog, sdlog))) |&gt;\n    select(year, age, sex, income)\n}\n\nWe can see how it works below.\n\nsimulated &lt;- simulate(n = 100)\n\nRows: 420 Columns: 6\n── Column specification ────────────────────────────────────────────────────────\nDelimiter: \",\"\nchr (1): sex\ndbl (5): year, age, meanlog, sdlog, weight\n\nℹ Use `spec()` to retrieve the full column specification for this data.\nℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.\n\n\n\n\n# A tibble: 100 × 4\n   year   age sex    income\n  &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;   &lt;dbl&gt;\n1  2012    43 female 80499.\n2  2011    32 male   32293.\n3  2011    50 male   30034.\n# ℹ 97 more rows"
+  },
+  {
+    "objectID": "evaluate_models_one_sample.html",
+    "href": "evaluate_models_one_sample.html",
+    "title": "Evaluate Models in One Sample",
+    "section": "",
+    "text": "The previous page was a nice exercise, but is infeasible in real settings! In the real world, we would have only one sample.\nsimulated &lt;- simulate(n = 100) |&gt;\n  # To track the units in this sample, we will add an id column\n  mutate(id = 1:n())\nOne way to evaluate in one sample is to use a split-sample procedure:\nThe advantage of this procedure is that a complex model that performs well in the learning set may not generalize well to the evaluation set. Through sample splitting, we can select a model that performs well at roughly our actual sample size (at least, at 50% of our sample size)."
+  },
+  {
+    "objectID": "evaluate_models_one_sample.html#split-into-learning-and-evaluation-sets",
+    "href": "evaluate_models_one_sample.html#split-into-learning-and-evaluation-sets",
+    "title": "Evaluate Models in One Sample",
+    "section": "Split into learning and evaluation sets",
+    "text": "Split into learning and evaluation sets\nCreate a learning set with half of the cases.\n\nlearning &lt;- simulated |&gt;\n  slice_sample(prop = .5)\n\nCreate an evaluation set with the other half.\n\nevaluation &lt;- simulated |&gt;\n  anti_join(learning, by = join_by(id))"
+  },
+  {
+    "objectID": "evaluate_models_one_sample.html#estimate-models-in-the-learning-set",
+    "href": "evaluate_models_one_sample.html#estimate-models-in-the-learning-set",
+    "title": "Evaluate Models in One Sample",
+    "section": "Estimate models in the learning set",
+    "text": "Estimate models in the learning set\nNext, estimate the models in the learning set.\n\nflat &lt;- lm(log(income) ~ sex, data = learning)\nlinear &lt;- lm(log(income) ~ sex * age, data = learning)\nquadratic &lt;- lm(log(income) ~ sex * poly(age,2), data = learning)"
+  },
+  {
+    "objectID": "evaluate_models_one_sample.html#evaluate-in-the-evaluation-set",
+    "href": "evaluate_models_one_sample.html#evaluate-in-the-evaluation-set",
+    "title": "Evaluate Models in One Sample",
+    "section": "Evaluate in the evaluation set",
+    "text": "Evaluate in the evaluation set\nUse them to predict in the evaluation set.\n\npredicted &lt;- evaluation |&gt;\n  mutate(\n    flat = predict(flat, newdata = evaluation),\n    linear = predict(linear, newdata = evaluation),\n    quadratic = predict(quadratic, newdata = evaluation)\n  )\n\nAggregate prediction errors in the evaluation set to produce mean squared error estimates for each model.\n\nperformance &lt;- predicted |&gt;\n  # Select the actual and predicted values\n  mutate(actual = log(income)) |&gt;\n  select(actual, flat, linear, quadratic) |&gt;\n  # Make a long dataset for ease of analysis\n  pivot_longer(cols = -actual, names_to = \"model_name\", values_to = \"prediction\") |&gt;\n  # Create a column with errors\n  mutate(squared_error = (actual - prediction) ^ 2) |&gt;\n  # Summarize mean squared error\n  group_by(model_name) |&gt;\n  summarize(mse = mean(squared_error)) |&gt;\n  print()\n\n# A tibble: 3 × 2\n  model_name   mse\n  &lt;chr&gt;      &lt;dbl&gt;\n1 flat       0.516\n2 linear     0.515\n3 quadratic  0.512\n\n\nOur split-sample procedure estimates that the quadratic model has the best performance!"
+  },
+  {
+    "objectID": "define_models.html#which-model-would-you-choose",
+    "href": "define_models.html#which-model-would-you-choose",
+    "title": "Why model?",
+    "section": "Which model would you choose?",
+    "text": "Which model would you choose?\nThink about an answer before going on to the next page."
+  },
+  {
+    "objectID": "evaluate_models_one_sample.html#difficulties-in-split-sample-model-evaluation",
+    "href": "evaluate_models_one_sample.html#difficulties-in-split-sample-model-evaluation",
+    "title": "Evaluate Models in One Sample",
+    "section": "Difficulties in split-sample model evaluation",
+    "text": "Difficulties in split-sample model evaluation\n\nthe estimated performance may itself be statistically uncertain\nif the best model in one subgroup is different from the best in another subgroup, then a sample-average MSE may not be optimal for selecting for our task"
+  },
+  {
+    "objectID": "challenge.html",
+    "href": "challenge.html",
+    "title": "Challenge Exercise",
+    "section": "",
+    "text": "This exercise uses models to describe where we have no data at all.\nCaution is always needed when carrying out model-based extrapolation. But when forecasting, a model is also often the only way to make progress.\nYou can generate data as on the Simulate Data page. You can set the sample size however large you want. You can use any model you want.\nYou might discuss methodological choices:\nYou might also discuss conceptual issues:"
+  },
+  {
+    "objectID": "challenge.html#an-example-to-get-you-started",
+    "href": "challenge.html#an-example-to-get-you-started",
+    "title": "Challenge Exercise",
+    "section": "An example to get you started",
+    "text": "An example to get you started\nAs a simple example, I might simulate a sample of size 100,\n\nsimulated &lt;- simulate(n = 100)\n\nRows: 420 Columns: 6\n── Column specification ────────────────────────────────────────────────────────\nDelimiter: \",\"\nchr (1): sex\ndbl (5): year, age, meanlog, sdlog, weight\n\nℹ Use `spec()` to retrieve the full column specification for this data.\nℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.\n\n\nestimate a linear model on those data,\n\nfit &lt;- lm(log(income) ~ sex * year, data = simulated)\n\nand report predictions in 2022.\n\nto_predict &lt;- tibble(\n  sex = c(\"female\",\"male\"),\n  year = c(2022,2022)\n)\nto_predict |&gt;\n  mutate(\n    # Make prediction\n    estimate = predict(fit, newdata = to_predict),\n    # Exponentiate to dollars\n    estimate = exp(estimate)\n  )\n\n# A tibble: 2 × 3\n  sex     year estimate\n  &lt;chr&gt;  &lt;dbl&gt;    &lt;dbl&gt;\n1 female  2022   52567.\n2 male    2022   65582."
+  },
+  {
+    "objectID": "challenge.html#what-to-try-next",
+    "href": "challenge.html#what-to-try-next",
+    "title": "Challenge Exercise",
+    "section": "What to try next",
+    "text": "What to try next\nYou might consider different functional forms, the overall mean, or machine learning estimators."
+  },
+  {
+    "objectID": "evaluate_many_samples.html",
+    "href": "evaluate_many_samples.html",
+    "title": "Evaluate Models Across Many Samples",
+    "section": "",
+    "text": "Because this setting is simulated, we can carry out an exercise to evaluate the performance of the 3 models."
+  },
+  {
+    "objectID": "evaluate_many_samples.html#estimator-functions",
+    "href": "evaluate_many_samples.html#estimator-functions",
+    "title": "Evaluate Models Across Many Samples",
+    "section": "Estimator functions",
+    "text": "Estimator functions\nThe functions below is an estimator: it take data in and returns estimates. This function can be applied with the flat, linear, and quadratic models defiend on the previous page.\n\nestimator &lt;- function(\n    data, # from simulate()\n    model_name # one of \"flat\", \"linear\", \"quadratic\"\n) {\n  # Estimate a regression model\n  if (model_name == \"flat\") {\n    fit &lt;- lm(log(income) ~ sex, data = data)\n  } else if (model_name == \"linear\") {\n    fit &lt;- lm(log(income) ~ sex * age, data = data)\n  } else if (model_name == \"quadratic\") {\n    fit &lt;- lm(log(income) ~ sex * poly(age,2), data = data)\n  }\n  # Define x-values at which to make predictions\n  to_predict &lt;- tibble(\n    sex = c(\"female\",\"male\"),\n    age = c(30,30)\n  )\n  # Make predictions\n  predicted &lt;- to_predict |&gt;\n    mutate(estimate = predict(fit, newdata = to_predict)) |&gt;\n    # Transform from log scale to dollars scale\n    mutate(estimate = exp(estimate)) |&gt;\n    # Append information for summarizing later\n    mutate(\n      model_name = model_name,\n      sample_size = nrow(data)\n    )\n  # Return the predicted estimates\n  return(predicted)\n}\n\nAs an illustration, here is the linear estimator applied to a simulated sample\n\nsimulated &lt;- simulate(n = 100)\n\nRows: 420 Columns: 6\n── Column specification ────────────────────────────────────────────────────────\nDelimiter: \",\"\nchr (1): sex\ndbl (5): year, age, meanlog, sdlog, weight\n\nℹ Use `spec()` to retrieve the full column specification for this data.\nℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.\n\n\n\nestimator(data = simulated, model_name = \"linear\")\n\n# A tibble: 2 × 5\n  sex      age estimate model_name sample_size\n  &lt;chr&gt;  &lt;dbl&gt;    &lt;dbl&gt; &lt;chr&gt;            &lt;int&gt;\n1 female    30   33683. linear             100\n2 male      30   40648. linear             100"
+  },
+  {
+    "objectID": "evaluate_many_samples.html#apply-estimators-in-repeated-samples",
+    "href": "evaluate_many_samples.html#apply-estimators-in-repeated-samples",
+    "title": "Evaluate Models Across Many Samples",
+    "section": "Apply estimators in repeated samples",
+    "text": "Apply estimators in repeated samples\nHow do our estimators perform in repeated samples? In actual problems, one only has one sample. But we created this exercise so that we can use simulate() to simulate many samples from a known data generating process. The code below applies the estimator to many samples of size 100.\nWe first prepare for parallel computing.\n\nlibrary(foreach)\nlibrary(doParallel)\nlibrary(doRNG)\ncl &lt;- makeCluster(detectCores())\nregisterDoParallel(cl)\n\nThen we apply the estimator many times at each of a series of sample sizes.\n\nsimulations &lt;- foreach(\n  repetition = 1:1000, \n  .combine = \"rbind\", \n  .packages = \"tidyverse\"\n) %dorng% {\n  foreach(n_value = c(50,100,200,500,1000), .combine = \"rbind\") %do% {\n    # Simulate data\n    simulated &lt;- simulate(n = n_value)\n    # Apply the three estimators\n    flat &lt;- estimator(data = simulated, model_name = \"flat\")\n    linear &lt;- estimator(data = simulated, model_name = \"linear\")\n    quadratic &lt;- estimator(data = simulated, model_name = \"quadratic\")\n    # Return estimates\n    all_estimates &lt;- rbind(flat, linear, quadratic)\n    return(all_estimates)\n  }\n}"
+  },
+  {
+    "objectID": "evaluate_many_samples.html#visualize-estimator-performance",
+    "href": "evaluate_many_samples.html#visualize-estimator-performance",
+    "title": "Evaluate Models Across Many Samples",
+    "section": "Visualize estimator performance",
+    "text": "Visualize estimator performance\nFor simplicity, we first focus on one estimand and sample size: modeling the geometric mean of 30-year-old female incomes with a sample size of \\(n = 100\\). Despite having good performance in the population, the quadratic model has poor performance at this sample size because it has high variance!\n\n\n\n\n\n\n\n\n\nTo aggregate simulations to a summary score, we use mean squared error (MSE) on the scale of log incomes.\n\\[\\begin{aligned}\n\\theta(\\vec{x}) &= \\text{True geometric mean in subgroup }\\vec{x} \\\\\n\\hat\\theta_r(\\vec{x}) &= \\text{Estimated geometric mean in subgroup }\\vec{x}\\text{ in simulated sample }r \\\\\n\\widehat{\\text{MSE}}\\bigg(\\hat\\theta(\\vec{x})\\bigg) &= \\frac{1}{R}\\sum_{r=1}^R \\left(\\text{log}(\\hat\\theta) - \\text{log}(\\theta)\\right)^2\n\\end{aligned}\\]\nThe figure below reports MSE for each estimator at each sample size."
+  },
+  {
+    "objectID": "evaluate_many_samples.html#conclusions",
+    "href": "evaluate_many_samples.html#conclusions",
+    "title": "Evaluate Models Across Many Samples",
+    "section": "Conclusions",
+    "text": "Conclusions\nThe results indicate that\n\nin a small sample (\\(n = 50\\)), the flat model is best\nthe linear model becomes best\n\nat \\(n = 100\\) for the male subgroup\nat \\(n = 500\\) for the female subgroup\n\nthe quadratic model becomes best\n\nat \\(n = 1,000\\) in the male subgroup\nat some higher sample size in the female subgroup\n\n\nThere are two main conclusions from this illustration. Which estimator is best is a question that\n\ndepends on the estimand (male or female subgroup), and\ndepends on the sample size\n\nFurther, although the quadratic fit is best in the population (previous page), a very large sample size is needed before it is best in a sample. This is a reminder that more complex models do not necessarily outperform simpler models, especially in small samples."
+  },
+  {
+    "objectID": "evaluate_one_sample.html",
+    "href": "evaluate_one_sample.html",
+    "title": "Evaluate Models in One Sample",
+    "section": "",
+    "text": "The previous page was a nice exercise, but is infeasible in real settings! In the real world, we would have only one sample.\nsimulated &lt;- simulate(n = 100) |&gt;\n  # To track the units in this sample, we will add an id column\n  mutate(id = 1:n())\nOne way to evaluate in one sample is to use a split-sample procedure:\nThe advantage of this procedure is that a complex model that performs well in the learning set may not generalize well to the evaluation set. Through sample splitting, we can select a model that performs well at roughly our actual sample size (at least, at 50% of our sample size)."
+  },
+  {
+    "objectID": "evaluate_one_sample.html#split-into-learning-and-evaluation-sets",
+    "href": "evaluate_one_sample.html#split-into-learning-and-evaluation-sets",
+    "title": "Evaluate Models in One Sample",
+    "section": "Split into learning and evaluation sets",
+    "text": "Split into learning and evaluation sets\nCreate a learning set with half of the cases.\n\nlearning &lt;- simulated |&gt;\n  slice_sample(prop = .5)\n\nCreate an evaluation set with the other half.\n\nevaluation &lt;- simulated |&gt;\n  anti_join(learning, by = join_by(id))"
+  },
+  {
+    "objectID": "evaluate_one_sample.html#estimate-models-in-the-learning-set",
+    "href": "evaluate_one_sample.html#estimate-models-in-the-learning-set",
+    "title": "Evaluate Models in One Sample",
+    "section": "Estimate models in the learning set",
+    "text": "Estimate models in the learning set\nNext, estimate the models in the learning set.\n\nflat &lt;- lm(log(income) ~ sex, data = learning)\nlinear &lt;- lm(log(income) ~ sex * age, data = learning)\nquadratic &lt;- lm(log(income) ~ sex * poly(age,2), data = learning)"
+  },
+  {
+    "objectID": "evaluate_one_sample.html#evaluate-in-the-evaluation-set",
+    "href": "evaluate_one_sample.html#evaluate-in-the-evaluation-set",
+    "title": "Evaluate Models in One Sample",
+    "section": "Evaluate in the evaluation set",
+    "text": "Evaluate in the evaluation set\nUse them to predict in the evaluation set.\n\npredicted &lt;- evaluation |&gt;\n  mutate(\n    flat = predict(flat, newdata = evaluation),\n    linear = predict(linear, newdata = evaluation),\n    quadratic = predict(quadratic, newdata = evaluation)\n  )\n\nAggregate prediction errors in the evaluation set to produce mean squared error estimates for each model.\n\nperformance &lt;- predicted |&gt;\n  # Select the actual and predicted values\n  mutate(actual = log(income)) |&gt;\n  select(actual, flat, linear, quadratic) |&gt;\n  # Make a long dataset for ease of analysis\n  pivot_longer(cols = -actual, names_to = \"model_name\", values_to = \"prediction\") |&gt;\n  # Create a column with errors\n  mutate(squared_error = (actual - prediction) ^ 2) |&gt;\n  # Summarize mean squared error\n  group_by(model_name) |&gt;\n  summarize(mse = mean(squared_error)) |&gt;\n  print()\n\n# A tibble: 3 × 2\n  model_name   mse\n  &lt;chr&gt;      &lt;dbl&gt;\n1 flat       0.519\n2 linear     0.506\n3 quadratic  0.521\n\n\nOur split-sample procedure estimates that the linear model has the best performance!"
+  },
+  {
+    "objectID": "evaluate_one_sample.html#difficulties-in-split-sample-model-evaluation",
+    "href": "evaluate_one_sample.html#difficulties-in-split-sample-model-evaluation",
+    "title": "Evaluate Models in One Sample",
+    "section": "Difficulties in split-sample model evaluation",
+    "text": "Difficulties in split-sample model evaluation\n\nthe estimated performance may itself be statistically uncertain\nif the best model in one subgroup is different from the best in another subgroup, then a sample-average MSE may not be optimal for selecting for our task"
+  },
+  {
+    "objectID": "evaluate_many_samples.html#a-subheader",
+    "href": "evaluate_many_samples.html#a-subheader",
+    "title": "Evaluate Models Across Many Samples",
+    "section": "A subheader",
+    "text": "A subheader"
+  },
+  {
+    "objectID": "evaluate.html",
+    "href": "evaluate.html",
+    "title": "Evaluate Models",
+    "section": "",
+    "text": "This page presents a \\(\\hat{Y}\\) view of what it means for one model to outperform another model. We first discuss in a simulated setting where we generate many samples from the population and directly observe performance of estimators across those simulated samples. Then, we discuss how one can evaluate performance in the more realistic setting in which only one sample from the population is available,"
+  },
+  {
+    "objectID": "evaluate.html#estimator-functions",
+    "href": "evaluate.html#estimator-functions",
+    "title": "Evaluate Models",
+    "section": "Estimator functions",
+    "text": "Estimator functions\nThe functions below is an estimator: it take data in and returns estimates. This function can be applied with the flat, linear, and quadratic models defiend on the previous page.\n\nestimator &lt;- function(\n    data, # from simulate()\n    model_name # one of \"flat\", \"linear\", \"quadratic\"\n) {\n  # Estimate a regression model\n  if (model_name == \"flat\") {\n    fit &lt;- lm(log(income) ~ sex, data = data)\n  } else if (model_name == \"linear\") {\n    fit &lt;- lm(log(income) ~ sex * age, data = data)\n  } else if (model_name == \"quadratic\") {\n    fit &lt;- lm(log(income) ~ sex * poly(age,2), data = data)\n  }\n  # Define x-values at which to make predictions\n  to_predict &lt;- tibble(\n    sex = c(\"female\",\"male\"),\n    age = c(30,30)\n  )\n  # Make predictions\n  predicted &lt;- to_predict |&gt;\n    mutate(estimate = predict(fit, newdata = to_predict)) |&gt;\n    # Transform from log scale to dollars scale\n    mutate(estimate = exp(estimate)) |&gt;\n    # Append information for summarizing later\n    mutate(\n      model_name = model_name,\n      sample_size = nrow(data)\n    )\n  # Return the predicted estimates\n  return(predicted)\n}\n\nAs an illustration, here is the linear estimator applied to a simulated sample\n\nsimulated &lt;- simulate(n = 100)\n\nRows: 420 Columns: 6\n── Column specification ────────────────────────────────────────────────────────\nDelimiter: \",\"\nchr (1): sex\ndbl (5): year, age, meanlog, sdlog, weight\n\nℹ Use `spec()` to retrieve the full column specification for this data.\nℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.\n\n\n\nestimator(data = simulated, model_name = \"linear\")\n\n# A tibble: 2 × 5\n  sex      age estimate model_name sample_size\n  &lt;chr&gt;  &lt;dbl&gt;    &lt;dbl&gt; &lt;chr&gt;            &lt;int&gt;\n1 female    30   30274. linear             100\n2 male      30   51442. linear             100"
+  },
+  {
+    "objectID": "evaluate.html#apply-estimators-in-repeated-samples",
+    "href": "evaluate.html#apply-estimators-in-repeated-samples",
+    "title": "Evaluate Models",
+    "section": "Apply estimators in repeated samples",
+    "text": "Apply estimators in repeated samples\nHow do our estimators perform in repeated samples? In actual problems, one only has one sample. But we created this exercise so that we can use simulate() to simulate many samples from a known data generating process. The code below applies the estimator to many samples of size 100.\nWe first prepare for parallel computing.\n\nlibrary(foreach)\nlibrary(doParallel)\nlibrary(doRNG)\ncl &lt;- makeCluster(detectCores())\nregisterDoParallel(cl)\n\nThen we apply the estimator many times at each of a series of sample sizes.\n\nsimulations &lt;- foreach(\n  repetition = 1:1000, \n  .combine = \"rbind\", \n  .packages = \"tidyverse\"\n) %dorng% {\n  foreach(n_value = c(50,100,200,500,1000), .combine = \"rbind\") %do% {\n    # Simulate data\n    simulated &lt;- simulate(n = n_value)\n    # Apply the three estimators\n    flat &lt;- estimator(data = simulated, model_name = \"flat\")\n    linear &lt;- estimator(data = simulated, model_name = \"linear\")\n    quadratic &lt;- estimator(data = simulated, model_name = \"quadratic\")\n    # Return estimates\n    all_estimates &lt;- rbind(flat, linear, quadratic)\n    return(all_estimates)\n  }\n}"
+  },
+  {
+    "objectID": "evaluate.html#visualize-estimator-performance",
+    "href": "evaluate.html#visualize-estimator-performance",
+    "title": "Evaluate Models",
+    "section": "Visualize estimator performance",
+    "text": "Visualize estimator performance\nFor simplicity, we first focus on one estimand and sample size: modeling the geometric mean of 30-year-old female incomes with a sample size of \\(n = 100\\). Despite having good performance in the population, the quadratic model has poor performance at this sample size because it has high variance!\n\n\n\n\n\n\n\n\n\nTo aggregate simulations to a summary score, we use mean squared error (MSE) on the scale of log incomes.\n\\[\\begin{aligned}\n\\theta(\\vec{x}) &= \\text{True geometric mean in subgroup }\\vec{x} \\\\\n\\hat\\theta_r(\\vec{x}) &= \\text{Estimated geometric mean in subgroup }\\vec{x}\\text{ in simulated sample }r \\\\\n\\widehat{\\text{MSE}}\\bigg(\\hat\\theta(\\vec{x})\\bigg) &= \\frac{1}{R}\\sum_{r=1}^R \\left(\\text{log}(\\hat\\theta) - \\text{log}(\\theta)\\right)^2\n\\end{aligned}\\]\nThe figure below reports MSE for each estimator at each sample size."
+  },
+  {
+    "objectID": "evaluate.html#conclusions",
+    "href": "evaluate.html#conclusions",
+    "title": "Evaluate Models",
+    "section": "Conclusions",
+    "text": "Conclusions\nThe results indicate that\n\nin a small sample (\\(n = 50\\)), the flat model is best\nthe linear model becomes best\n\nat \\(n = 100\\) for the male subgroup\nat \\(n = 500\\) for the female subgroup\n\nthe quadratic model becomes best\n\nat \\(n = 1,000\\) in the male subgroup\nat some higher sample size in the female subgroup\n\n\nThere are two main conclusions from this illustration. Which estimator is best is a question that\n\ndepends on the estimand (male or female subgroup), and\ndepends on the sample size\n\nFurther, although the quadratic fit is best in the population (previous page), a very large sample size is needed before it is best in a sample. This is a reminder that more complex models do not necessarily outperform simpler models, especially in small samples."
+  },
+  {
+    "objectID": "evaluate.html#split-into-learning-and-evaluation-sets",
+    "href": "evaluate.html#split-into-learning-and-evaluation-sets",
+    "title": "Evaluate Models",
+    "section": "Split into learning and evaluation sets",
+    "text": "Split into learning and evaluation sets\nCreate a learning set with half of the cases.\n\nlearning &lt;- simulated |&gt;\n  slice_sample(prop = .5)\n\nCreate an evaluation set with the other half.\n\nevaluation &lt;- simulated |&gt;\n  anti_join(learning, by = join_by(id))"
+  },
+  {
+    "objectID": "evaluate.html#estimate-models-in-the-learning-set",
+    "href": "evaluate.html#estimate-models-in-the-learning-set",
+    "title": "Evaluate Models",
+    "section": "Estimate models in the learning set",
+    "text": "Estimate models in the learning set\nNext, estimate the models in the learning set.\n\nflat &lt;- lm(log(income) ~ sex, data = learning)\nlinear &lt;- lm(log(income) ~ sex * age, data = learning)\nquadratic &lt;- lm(log(income) ~ sex * poly(age,2), data = learning)"
+  },
+  {
+    "objectID": "evaluate.html#evaluate-in-the-evaluation-set",
+    "href": "evaluate.html#evaluate-in-the-evaluation-set",
+    "title": "Evaluate Models",
+    "section": "Evaluate in the evaluation set",
+    "text": "Evaluate in the evaluation set\nUse them to predict in the evaluation set.\n\npredicted &lt;- evaluation |&gt;\n  mutate(\n    flat = predict(flat, newdata = evaluation),\n    linear = predict(linear, newdata = evaluation),\n    quadratic = predict(quadratic, newdata = evaluation)\n  )\n\nAggregate prediction errors in the evaluation set to produce mean squared error estimates for each model.\n\nperformance &lt;- predicted |&gt;\n  # Select the actual and predicted values\n  mutate(actual = log(income)) |&gt;\n  select(actual, flat, linear, quadratic) |&gt;\n  # Make a long dataset for ease of analysis\n  pivot_longer(cols = -actual, names_to = \"model_name\", values_to = \"prediction\") |&gt;\n  # Create a column with errors\n  mutate(squared_error = (actual - prediction) ^ 2) |&gt;\n  # Summarize mean squared error\n  group_by(model_name) |&gt;\n  summarize(mse = mean(squared_error)) |&gt;\n  print()\n\n# A tibble: 3 × 2\n  model_name   mse\n  &lt;chr&gt;      &lt;dbl&gt;\n1 flat       0.441\n2 linear     0.457\n3 quadratic  0.433\n\n\nOur split-sample procedure estimates that the quadratic model has the best performance!"
+  },
+  {
+    "objectID": "evaluate.html#difficulties-in-split-sample-model-evaluation",
+    "href": "evaluate.html#difficulties-in-split-sample-model-evaluation",
+    "title": "Evaluate Models",
+    "section": "Difficulties in split-sample model evaluation",
+    "text": "Difficulties in split-sample model evaluation\n\nthe estimated performance may itself be statistically uncertain\nif the best model in one subgroup is different from the best in another subgroup, then a sample-average MSE may not be optimal for selecting for our task"
+  }
+]

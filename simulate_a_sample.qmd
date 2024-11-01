@@ -1,0 +1,40 @@
+---
+title: "Simulate Data"
+---
+
+This exercise works with simulated samples. Taking the nonparametric estimates from 5 million cases as the truth, you will generate a simulated sample of a much smaller size using the code below.
+
+Prepare the environment by loading the `tidyverse` package.
+
+```{r, message = F, warning = F}
+library(tidyverse)
+```
+
+The function below simulates a sample of 100 cases.
+
+```{r, echo = F}
+simulate <- function(n = 100) {
+  read_csv("assets/truth.csv") |>
+    slice_sample(n = n, weight_by = weight, replace = T) |>
+    mutate(income = exp(rnorm(n(), meanlog, sdlog))) |>
+    select(year, age, sex, income)
+}
+```
+
+```{r, eval = F}
+simulate <- function(n = 100) {
+  read_csv("https://ilundberg.github.io/description/assets/truth.csv") |>
+    slice_sample(n = n, weight_by = weight, replace = T) |>
+    mutate(income = exp(rnorm(n(), meanlog, sdlog))) |>
+    select(year, age, sex, income)
+}
+```
+
+We can see how it works below.
+
+```{r, results = 'hide'}
+simulated <- simulate(n = 100)
+```
+```{r, echo = F}
+simulated |> print(n = 3)
+```

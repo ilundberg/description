@@ -1,0 +1,64 @@
+---
+title: "Challenge Exercise"
+---
+
+This exercise uses models to describe where we have **no data at all**.
+
+* data: male and female incomes at age 30--50 in 2010--2019
+* task: what was the male and female geometric mean pay at age 30--50 in **2022**?
+
+Caution is always needed when carrying out model-based extrapolation. But when forecasting, a model is also often the only way to make progress.
+
+You can generate data as on the [Simulate Data](simulate_a_sample) page. You can set the sample size however large you want. You can use any model you want.
+
+You might discuss methodological choices:
+
+* how would you generate an evaluation set for this problem?
+* what models do you think would work well?
+
+You might also discuss conceptual issues:
+
+* why might we be hesitant to carry out this extrapolation?
+
+## An example to get you started
+
+As a simple example, I might simulate a sample of size 100,
+
+```{r, echo = F, results = "hide", message = F, warning = F}
+library(tidyverse)
+simulate <- function(n = 100) {
+  read_csv("assets/truth.csv") |>
+    slice_sample(n = n, weight_by = weight, replace = T) |>
+    mutate(income = exp(rnorm(n(), meanlog, sdlog))) |>
+    select(year, age, sex, income)
+}
+```
+
+```{r, results = "hide"}
+simulated <- simulate(n = 100)
+```
+
+estimate a linear model on those data,
+
+```{r}
+fit <- lm(log(income) ~ sex * year, data = simulated)
+```
+
+and report predictions in 2022.
+```{r}
+to_predict <- tibble(
+  sex = c("female","male"),
+  year = c(2022,2022)
+)
+to_predict |>
+  mutate(
+    # Make prediction
+    estimate = predict(fit, newdata = to_predict),
+    # Exponentiate to dollars
+    estimate = exp(estimate)
+  )
+```
+
+## What to try next
+
+You might consider different functional forms, the overall mean, or machine learning estimators.

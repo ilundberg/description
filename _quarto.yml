@@ -1,0 +1,27 @@
+project:
+  type: website
+  output-dir: docs
+
+website:
+  title: "causalestimators"
+  navbar:
+    left:
+      - href: index.qmd
+        text: Home
+      - href: simulate_a_sample.qmd
+        text: Simulate a Sample
+      - href: define_models.qmd
+        text: Define Models
+      - href: evaluate.qmd
+        text: Evaluate Models
+      - href: challenge.qmd
+        text: Challenge Exercise
+
+format:
+  html:
+    theme: cosmo
+    css: styles.css
+    toc: true
+
+
+

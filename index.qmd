@@ -1,0 +1,65 @@
+---
+title: "Description: Using models to describe"
+---
+
+This page introduces an ongoing collaborative project by [Ian Lundberg](https://www.ianlundberg.org/) and [Kristin Liao](https://www.kristinliao.com/) at UCLA.
+
+Descriptive research summarizes the world as it exists. Description may not require a model---the mean of an outcome in a simple random sample can be a powerful form of description. This tutorial first considers model-free description and then pivots to a view of model-based description.
+
+We take a $\hat{Y}$ view as opposed to a $\hat\beta$ view of model-based description. This view is in some sense both radical and conventional.
+
+* radical: we will never report $\hat\beta$, and only $\hat{Y}$
+* conventional: we consider a model as a tool to estimate subgroup means
+
+Because our view pushes beyond $\hat\beta$, an additional upside is that it opens the door to machine learning estimators for description that may not be parameterized by coefficients.
+
+## Concrete setting
+
+Using data from the 2010--2019 American Community Survey (ACS), we describe sex gaps in pay. We focus on the subgroup of adults ages 30--50 who worked for pay full-time (35+ hours per week) and for the full year (50+ weeks). Our outcome $Y$ is annual wage and salary income. We summarize by the geometric mean (the exponentiated mean of log income), and we report the female / male ratio of geometric mean pay.
+
+## Model-free description
+
+Let $Y$ be the income of a randomly sampled person from our population. With a large sample, one could summarize the geometric mean of $Y$ by a sample mean estimator.
+
+$$\widehat{\text{GM}}(Y) = \text{exp}\left(\frac{1}{n}\sum_{i=1}^n \text{log}(y_i)\right)$$
+
+We next consider a subgroup summary: the geometric mean among female respondents age 30. Letting $\vec{X}$ denote the values of these two features for a randomly sampled person and $\vec{x}$ denoting the particular values of interest, we could estimate by the sample mean of the target subgroup.
+
+$$\widehat{GM}(Y\mid\vec{X} = \vec{x}) = \text{exp}\left(\frac{1}{n_\vec{x}}\sum_{i:\vec{X}_i=\vec{x}} \text{log}(y_i)\right)$$
+where the sum is over people whose feature vector $\vec{X}$ equals the target value $\vec{x}$ (e.g., female respondents age 30) and the number of people in the subgroup is $n_{\vec{x}}$.
+
+**Small sample sizes** become a problem for model-free subgroup description. Even in a large sample, there may be few female respondents who are 30 years old.
+
+## Model-based description
+
+In a sample with very few 30-year-old female respondents, one might consider whether other respondents might be informative. Perhaps 31-year-old female respondents or 30-year-old male respondents provide data that could be informative about the pay of 30-year-old female respondents.
+
+For us, a **model** is a tool to pool information from units outside the target subgroup in order to produce a better estimate within the target subgroup.
+
+Formally, let $\hat{f}()$ be a learned model: a function that maps a feature vector $\vec{x}$ to a predicted outcome $\hat{f}(\vec{x})$. The predicted value is an estimate of some summary of the conditional distribution of $Y$ among those with the feature set $\vec{X} = \vec{x}$.
+
+For example, we might fit a linear regression model for log income.
+
+$$\begin{aligned}
+&\widehat{E}(\text{log}(Y)\mid \vec{X} = \vec{x}) \\&= \vec{x}'\hat{\vec\beta} \\&= \hat\beta_0 + \hat\beta_1(\text{Female}) + \hat\beta_2(\text{Age}) + \hat\beta_3(\text{Female}\times\text{Age})
+\end{aligned}$$
+
+The prediction function for geometric mean pay would then be the exponentiated value of predicted log pay.
+
+$$\widehat{\text{GM}}(Y\mid \vec{X} = \vec{x}) = \hat{f}(\vec{x}) = \text{exp}(\vec{x}'\hat{\vec\beta})$$
+
+## The choice
+
+We would prefer
+
+* model-free description when there are enough cases
+* model-based description when data are scarce
+
+as long as our model pools information effectively. Data can help us decide!
+
+What comes next:
+
+* first generate some simulated data
+* then apply a model-free estimator
+* then apply an OLS model-based estimator
+* then apply a more flexible spline estimator

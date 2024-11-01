@@ -1,0 +1,156 @@
+---
+title: "Why model?"
+---
+
+```{r, echo = F, message = F, warning = F}
+library(tidyverse)
+```
+
+We model because
+
+* there is not enough data in our target subgroup
+* we have a good idea to share information with other cases
+
+## Generate an illustration sample
+
+The code below will generate a sample of 100 respondents simulated to correspond to the target population ages 30--50 in 2010--2019.
+
+```{r, comment = F, message = F}
+simulate <- function(n = 100) {
+  read_csv("assets/truth.csv") |>
+    slice_sample(n = n, weight_by = weight, replace = T) |>
+    mutate(income = exp(rnorm(n(), meanlog, sdlog))) |>
+    select(year, age, sex, income)
+}
+```
+
+```{r, message = F}
+simulated <- simulate(n = 100)
+```
+```{r, echo = F}
+num_female <- simulated |>
+  filter(age == 30 & sex == "female") |>
+  nrow()
+num_male <- simulated |>
+  filter(age == 30 & sex == "male") |>
+  nrow()
+while (num_female == 0 | num_male == 0) {
+  simulated <- simulate_2010(n = 100)
+  num_female <- simulated |>
+    filter(age == 30 & sex == "female") |>
+    nrow()
+  num_male <- simulated |>
+    filter(age == 30 & sex == "male") |>
+    nrow()
+}
+simulated |> print(n = 3)
+```
+
+## Target estimand
+
+We will estimate three target quantities:
+
+* (1) geometric mean pay among female respondents age 30
+* (2) geometric mean pay among male respondents age 30
+* (3) ratio (1) / (2)
+
+
+
+In our sample, there are only `r num_female` female and `r num_male` male 30-year-olds! We will need a model.
+
+```{r, eval = F, echo = F}
+simulated |>
+  filter(age == 30 & sex == "female")
+```
+
+## Models for illustration
+
+We consider a series of three models.
+
+* Flat model: Geometric mean among everyone
+* Linear model: Prediction from linear fit on age $\times$ sex
+* Quadratic model: Prediction from quadratic fit on age $\times$ sex
+
+Recall that each model is a tool to share information from other cases in order to predict an estimate for the target subgroups: 30-year-old male and female respondents.
+
+```{r, echo = F}
+truth <- read_csv("assets/truth.csv") |>
+  group_by(sex, age) |>
+  summarize(meanlog = weighted.mean(meanlog, w = weight))
+
+estimators <- function(
+    data,
+    to_predict = tibble(
+      sex = rep(c("female","male"),2),
+      age = rep(c(30,45),each = 2)
+    )
+) {
+  fit_flat <- lm(log(income) ~ sex, data = data)
+  fit_linear <- lm(log(income) ~ sex*age, data = data)
+  fit_quadratic <- lm(log(income) ~ sex*poly(age,2), data = data)
+  
+  to_predict |>
+    left_join(
+      data |> group_by(age, sex) |> summarize(point = exp(mean(log(income))), .groups = "drop"),
+      by = join_by(age, sex)
+    ) |>
+    mutate(
+      flat = exp(predict(fit_flat, newdata = to_predict)),
+      linear = exp(predict(fit_linear, newdata = to_predict)),
+      quadratic = exp(predict(fit_quadratic, newdata = to_predict))
+    ) |>
+    pivot_longer(cols = c("point","flat","linear","quadratic"), names_to = "estimator", values_to = "estimate") |>
+    # Calculate the female / male ratio of estimates
+    pivot_wider(names_from = "sex", values_from = "estimate") |>
+    mutate(ratio = female / male) |>
+    pivot_longer(
+      cols = c("female","male","ratio"), 
+      names_to = "estimand", 
+      values_to = "estimate"
+    ) |>
+    mutate(sample_size = nrow(data))
+}
+
+estimators(
+  data = truth |> mutate(income = exp(meanlog)),
+  to_predict = tibble(
+      sex = rep(c("female","male"),16),
+      age = rep(c(30:45),each = 2)
+    )
+) |>
+  left_join(truth |> mutate(truth = exp(meanlog)) |> rename(estimand = sex), by = c("estimand","age")) |>
+  filter(estimand != "ratio") |>
+  filter(estimator != "point") |>
+  ggplot(aes(x = age, color = estimand)) +
+  geom_line(aes(y = estimate)) +
+  geom_point(aes(y = truth, shape = age == 30)) +
+  facet_wrap(
+    ~estimator,
+    labeller = as_labeller(function(x) {
+      case_when(
+        x == "flat" ~ "Flat Model",
+        x == "linear" ~ "Linear Model",
+        x == "quadratic" ~ "Quadratic Model"
+      )
+    })
+  ) + 
+  ggtitle("Illustrated on full data: 5 million cases") +
+  scale_color_discrete(
+    name = "Sex Subgroup",
+    labels = c("Female","Male")
+  ) +
+  scale_x_continuous(name = "Age Subgroup") +
+  scale_y_continuous(name = "Geometric Mean Income\n(Log Scale)", labels = scales::label_dollar(), trans = "log") +
+  scale_shape_manual(
+    name = element_blank(),
+    labels = function(x) ifelse(x,"Target Subgroup","Other Cases"),
+    values = c(1,16)
+  )
+```
+
+We will use these models for a task: estimate the geometric mean pay among 30-year-old male and female respondents. We will carry out the task in a simulated sample of 100 respondents.
+
+## Which model would you choose?
+
+Think about an answer before going on to the next page.
+
