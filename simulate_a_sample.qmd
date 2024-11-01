@@ -2,7 +2,7 @@
 title: "Simulate Data"
 ---
 
-This exercise works with simulated samples. Taking the nonparametric estimates from 5 million cases as the truth, you will generate a simulated sample of a much smaller size using the code below.
+This exercise works with simulated samples. Taking the [nonparametric estimates](assets/truth.csv) from 5 million cases as the truth, you will generate a simulated sample of a much smaller size using the code below.
 
 Prepare the environment by loading the `tidyverse` package.
 
