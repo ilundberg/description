@@ -139,6 +139,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">Evaluate Models</span></a>
   </li>  
   <li class="nav-item">
+    <a class="nav-link" href="./machine_learning.html"> 
+<span class="menu-text">Machine Learning</span></a>
+  </li>  
+  <li class="nav-item">
     <a class="nav-link active" href="./challenge.html" aria-current="page"> 
 <span class="menu-text">Challenge Exercise</span></a>
   </li>  
@@ -158,7 +162,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#an-example-to-get-you-started" id="toc-an-example-to-get-you-started" class="nav-link active" data-scroll-target="#an-example-to-get-you-started">An example to get you started</a></li>
+  <li><a href="#things-you-might-discuss" id="toc-things-you-might-discuss" class="nav-link active" data-scroll-target="#things-you-might-discuss">Things you might discuss</a></li>
+  <li><a href="#example-code-to-get-you-started" id="toc-example-code-to-get-you-started" class="nav-link" data-scroll-target="#example-code-to-get-you-started">Example code to get you started</a></li>
   <li><a href="#what-to-try-next" id="toc-what-to-try-next" class="nav-link" data-scroll-target="#what-to-try-next">What to try next</a></li>
   </ul>
 </nav>
@@ -188,10 +193,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>This exercise uses models to describe where we have <strong>no data at all</strong>.</p>
 <ul>
 <li>data: male and female incomes at age 30–50 in 2010–2019</li>
-<li>task: what was the male and female geometric mean pay at age 30–50 in <strong>2022</strong>?</li>
+<li>task: forecast male and female geometric mean pay at age 30–50 in 2022</li>
 </ul>
-<p>Caution is always needed when carrying out model-based extrapolation. But when forecasting, a model is also often the only way to make progress.</p>
-<p>You can generate data as on the <a href="simulate_a_sample">Simulate Data</a> page. You can set the sample size however large you want. You can use any model you want.</p>
+<p>Generate data as on the <a href="simulate_a_sample">Simulate Data</a> page. You can set the sample size however large you want. You can use any model you want.</p>
+<p>Report your prediction in this <a href="https://forms.gle/UnfUmcLsrBZfLgNn9">Google Form</a>.</p>
+<section id="things-you-might-discuss" class="level2">
+<h2 class="anchored" data-anchor-id="things-you-might-discuss">Things you might discuss</h2>
 <p>You might discuss methodological choices:</p>
 <ul>
 <li>how would you generate an evaluation set for this problem?</li>
@@ -201,45 +208,53 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <ul>
 <li>why might we be hesitant to carry out this extrapolation?</li>
 </ul>
-<section id="an-example-to-get-you-started" class="level2">
-<h2 class="anchored" data-anchor-id="an-example-to-get-you-started">An example to get you started</h2>
-<p>As a simple example, I might simulate a sample of size 100,</p>
+</section>
+<section id="example-code-to-get-you-started" class="level2">
+<h2 class="anchored" data-anchor-id="example-code-to-get-you-started">Example code to get you started</h2>
+<p>To run the code on this page, you will need the <code>tidyverse</code> package.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>simulated <span class="ot">&lt;-</span> <span class="fu">simulate</span>(<span class="at">n =</span> <span class="dv">100</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Rows: 420 Columns: 6
-── Column specification ────────────────────────────────────────────────────────
-Delimiter: ","
-chr (1): sex
-dbl (5): year, age, meanlog, sdlog, weight
-
-ℹ Use `spec()` to retrieve the full column specification for this data.
-ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
+<p>We will also set the seed so that it is possible to exactly reproduce these results.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">90095</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>As a simple example, you might simulate a sample of size 100,</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>simulated <span class="ot">&lt;-</span> <span class="fu">simulate</span>(<span class="at">n =</span> <span class="dv">100</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>estimate a linear model on those data,</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">lm</span>(<span class="fu">log</span>(income) <span class="sc">~</span> sex <span class="sc">*</span> year, <span class="at">data =</span> simulated)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">lm</span>(<span class="fu">log</span>(income) <span class="sc">~</span> sex <span class="sc">*</span> year, <span class="at">data =</span> simulated)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>and report predictions in 2022.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>to_predict <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">sex =</span> <span class="fu">c</span>(<span class="st">"female"</span>,<span class="st">"male"</span>),</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">year =</span> <span class="fu">c</span>(<span class="dv">2022</span>,<span class="dv">2022</span>)</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>to_predict <span class="sc">|&gt;</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Make prediction</span></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">estimate =</span> <span class="fu">predict</span>(fit, <span class="at">newdata =</span> to_predict),</span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Exponentiate to dollars</span></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">estimate =</span> <span class="fu">exp</span>(estimate)</span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>to_predict <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">sex =</span> <span class="fu">c</span>(<span class="st">"female"</span>,<span class="st">"male"</span>),</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">year =</span> <span class="fu">c</span>(<span class="dv">2022</span>,<span class="dv">2022</span>)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>to_predict <span class="sc">|&gt;</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Make prediction</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">estimate =</span> <span class="fu">predict</span>(fit, <span class="at">newdata =</span> to_predict),</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Exponentiate to dollars</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">estimate =</span> <span class="fu">exp</span>(estimate)</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 2 × 3
   sex     year estimate
   &lt;chr&gt;  &lt;dbl&gt;    &lt;dbl&gt;
-1 female  2022   62929.
-2 male    2022   52708.</code></pre>
+1 female  2022   81777.
+2 male    2022   76336.</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="challenge_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 </section>

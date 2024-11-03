@@ -4,6 +4,8 @@ title: "Simulate Data"
 
 This exercise works with simulated samples. Taking the [nonparametric estimates](assets/truth.csv) from 5 million cases as the truth, you will generate a simulated sample of a much smaller size using the code below.
 
+If you are a Stata user, see the bottom of this page for code. The page mainly supports coding in R.
+
 Prepare the environment by loading the `tidyverse` package.
 
 ```{r, message = F, warning = F}
@@ -30,11 +32,44 @@ simulate <- function(n = 100) {
 }
 ```
 
-We can see how it works below.
+We can see how it works below,
 
 ```{r, results = 'hide'}
 simulated <- simulate(n = 100)
 ```
-```{r, echo = F}
+
+and can print a bit of the output.
+
+```{r}
 simulated |> print(n = 3)
+```
+
+## Code for Stata users
+
+I am mostly not a Stata user, and this is provided for secondary pedadogical purposes in case some people do not use R. If you are a Stata user, feel free to let me know how to improve this code.
+
+```{r, eval = F}
+set seed 90095
+
+* Load true population data
+
+import delimited https://ilundberg.github.io/description/assets/truth.csv
+
+* Draw a sample of 100 X-values
+* Need two supporting packages
+*ssc install moremata
+*ssc install gsample
+
+* Draw the sample
+gsample 100 [w = weight]
+
+* Simulate individual income data
+gen log_income = meanlog + sdlog * rnormal()
+gen income = exp(log_income)
+
+* Keep variables to work with
+
+encode sex, gen(factorsex)
+keep year age factorsex log_income income
+rename factorsex sex
 ```

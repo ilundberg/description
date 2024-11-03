@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Why model? – Description</title>
+<title>Machine Learning – Description</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -160,7 +160,7 @@ window.Quarto = {
 <span class="menu-text">Simulate a Sample</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link active" href="./define_models.html" aria-current="page"> 
+    <a class="nav-link" href="./define_models.html"> 
 <span class="menu-text">Define Models</span></a>
   </li>  
   <li class="nav-item">
@@ -168,7 +168,7 @@ window.Quarto = {
 <span class="menu-text">Evaluate Models</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./machine_learning.html"> 
+    <a class="nav-link active" href="./machine_learning.html" aria-current="page"> 
 <span class="menu-text">Machine Learning</span></a>
   </li>  
   <li class="nav-item">
@@ -191,10 +191,13 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#generate-an-illustration-sample" id="toc-generate-an-illustration-sample" class="nav-link active" data-scroll-target="#generate-an-illustration-sample">Generate an illustration sample</a></li>
-  <li><a href="#target-estimand" id="toc-target-estimand" class="nav-link" data-scroll-target="#target-estimand">Target estimand</a></li>
-  <li><a href="#models-for-illustration" id="toc-models-for-illustration" class="nav-link" data-scroll-target="#models-for-illustration">Models for illustration</a></li>
-  <li><a href="#which-model-would-you-choose" id="toc-which-model-would-you-choose" class="nav-link" data-scroll-target="#which-model-would-you-choose">Which model would you choose?</a></li>
+  <li><a href="#prepare-data" id="toc-prepare-data" class="nav-link active" data-scroll-target="#prepare-data">Prepare data</a></li>
+  <li><a href="#ols-review" id="toc-ols-review" class="nav-link" data-scroll-target="#ols-review">OLS review</a></li>
+  <li><a href="#thin-plate-spline" id="toc-thin-plate-spline" class="nav-link" data-scroll-target="#thin-plate-spline">Thin-plate spline</a></li>
+  <li><a href="#regression-tree" id="toc-regression-tree" class="nav-link" data-scroll-target="#regression-tree">Regression tree</a></li>
+  <li><a href="#random-forest" id="toc-random-forest" class="nav-link" data-scroll-target="#random-forest">Random forest</a></li>
+  <li><a href="#closing-thoughts" id="toc-closing-thoughts" class="nav-link" data-scroll-target="#closing-thoughts">Closing thoughts</a></li>
+  <li><a href="#code-for-stata-users" id="toc-code-for-stata-users" class="nav-link" data-scroll-target="#code-for-stata-users">Code for Stata users</a></li>
   </ul>
 </nav>
     </div>
@@ -203,7 +206,7 @@ window.Quarto = {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Why model?</h1>
+<h1 class="title">Machine Learning</h1>
 </div>
 
 
@@ -220,11 +223,8 @@ window.Quarto = {
 </header>
 
 
-<p>We model because</p>
-<ul>
-<li>there is not enough data in our target subgroup</li>
-<li>we have a good idea to share information with other cases</li>
-</ul>
+<p>Under a worldview in which descriptive models exist to produce <span class="math inline">\(\hat{Y}\)</span> instead of <span class="math inline">\(\hat\beta\)</span>, machine learning (ML) becomes an easy plug-in replacement for classical statistics. We only need <span class="math inline">\(\hat{Y}\)</span>, and machine learning estimators might produce good <span class="math inline">\(\hat{Y}\)</span> values.</p>
+<p>We illustrate by the example from <a href="define_models">Define Models</a> and <a href="evaluate">Evaluate Models</a>. Below, we apply several machine learning estimators to the task of modeling geometric mean income for male and female respondents at age 30.</p>
 <p>To run the code on this page, you will need the <code>tidyverse</code> package.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -233,82 +233,231 @@ window.Quarto = {
 <div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">90095</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<section id="generate-an-illustration-sample" class="level2">
-<h2 class="anchored" data-anchor-id="generate-an-illustration-sample">Generate an illustration sample</h2>
-<p>The code below will generate a sample of 100 respondents simulated to correspond to the target population ages 30–50 in 2010–2019.</p>
+<section id="prepare-data" class="level2">
+<h2 class="anchored" data-anchor-id="prepare-data">Prepare data</h2>
+<p>We first load the simulate function (see <a href="simulate_a_sample">Simulate a Sample</a>) to create a sample of 1,000 observations. We make the sample larger because many ML models will perform better at larger sample sizes.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>simulate <span class="ot">&lt;-</span> <span class="cf">function</span>(<span class="at">n =</span> <span class="dv">100</span>) {</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read_csv</span>(<span class="st">"assets/truth.csv"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">slice_sample</span>(<span class="at">n =</span> n, <span class="at">weight_by =</span> weight, <span class="at">replace =</span> T) <span class="sc">|&gt;</span></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">income =</span> <span class="fu">exp</span>(<span class="fu">rnorm</span>(<span class="fu">n</span>(), meanlog, sdlog))) <span class="sc">|&gt;</span></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(year, age, sex, income)</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>simulated <span class="ot">&lt;-</span> <span class="fu">simulate</span>(<span class="at">n =</span> <span class="dv">100</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>simulated <span class="ot">&lt;-</span> <span class="fu">simulate</span>(<span class="at">n =</span> <span class="dv">1000</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
 <div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 100 × 4
-   year   age sex    income
-  &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;   &lt;dbl&gt;
-1  2011    48 female 24697.
-2  2012    38 female 82433.
-3  2013    38 female 86219.
-# ℹ 97 more rows</code></pre>
+<pre><code># A tibble: 1,000 × 4
+   year   age sex     income
+  &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;    &lt;dbl&gt;
+1  2011    48 female 351418.
+2  2012    38 female  28066.
+3  2013    38 female 133671.
+# ℹ 997 more rows</code></pre>
 </div>
 </div>
-</section>
-<section id="target-estimand" class="level2">
-<h2 class="anchored" data-anchor-id="target-estimand">Target estimand</h2>
-<p>We will estimate three target quantities:</p>
-<ul>
-<li><ol type="1">
-<li>geometric mean pay among female respondents age 30</li>
-</ol></li>
-<li><ol start="2" type="1">
-<li>geometric mean pay among male respondents age 30</li>
-</ol></li>
-<li><ol start="3" type="1">
-<li>ratio (1) / (2)</li>
-</ol></li>
-</ul>
-<p>In our sample, there are only 3 female and 6 male 30-year-olds! We will need a model.</p>
-</section>
-<section id="models-for-illustration" class="level2">
-<h2 class="anchored" data-anchor-id="models-for-illustration">Models for illustration</h2>
-<p>We consider a series of three models.</p>
-<ul>
-<li>Flat model: Geometric mean among everyone</li>
-<li>Linear model: Prediction from linear fit on age <span class="math inline">\(\times\)</span> sex</li>
-<li>Quadratic model: Prediction from quadratic fit on age <span class="math inline">\(\times\)</span> sex</li>
-</ul>
-<p>Recall that each model is a tool to share information from other cases in order to predict an estimate for the target subgroups: 30-year-old male and female respondents.</p>
+<p>We then define the cases at which we want to make predictions.</p>
 <div class="cell">
-<div class="cell-output cell-output-stderr">
-<pre><code>Rows: 420 Columns: 6
-── Column specification ────────────────────────────────────────────────────────
-Delimiter: ","
-chr (1): sex
-dbl (5): year, age, meanlog, sdlog, weight
-
-ℹ Use `spec()` to retrieve the full column specification for this data.
-ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-`summarise()` has grouped output by 'sex'. You can override using the `.groups` argument.</code></pre>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>to_predict <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">sex =</span> <span class="fu">c</span>(<span class="st">"female"</span>,<span class="st">"male"</span>),</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">age =</span> <span class="fu">c</span>(<span class="dv">30</span>,<span class="dv">30</span>)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 2 × 2
+  sex      age
+  &lt;chr&gt;  &lt;dbl&gt;
+1 female    30
+2 male      30</code></pre>
+</div>
+</div>
+<p>The sections below show several statistical and machine learning estimators.</p>
+</section>
+<section id="ols-review" class="level2">
+<h2 class="anchored" data-anchor-id="ols-review">OLS review</h2>
+<p>As a brief review, recall that this procedure works with OLS. First, learn a model.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">lm</span>(<span class="fu">log</span>(income) <span class="sc">~</span> sex <span class="sc">*</span> age, <span class="at">data =</span> simulated)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Then make predictions.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>to_predict <span class="sc">|&gt;</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">log_yhat =</span> <span class="fu">predict</span>(fit, <span class="at">newdata =</span> to_predict)) <span class="sc">|&gt;</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">yhat =</span> <span class="fu">exp</span>(log_yhat))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 2 × 4
+  sex      age log_yhat   yhat
+  &lt;chr&gt;  &lt;dbl&gt;    &lt;dbl&gt;  &lt;dbl&gt;
+1 female    30     10.6 41119.
+2 male      30     10.8 47207.</code></pre>
+</div>
+</div>
+<p>The graph below visualizes this fit.</p>
+<div class="cell">
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="define_models_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="machine_learning_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
 </div>
-<p>We will use these models for a task: estimate the geometric mean pay among 30-year-old male and female respondents. We will carry out the task in a simulated sample of 100 respondents.</p>
 </section>
-<section id="which-model-would-you-choose" class="level2">
-<h2 class="anchored" data-anchor-id="which-model-would-you-choose">Which model would you choose?</h2>
-<p>Think about an answer before going on to the next page.</p>
+<section id="thin-plate-spline" class="level2">
+<h2 class="anchored" data-anchor-id="thin-plate-spline">Thin-plate spline</h2>
+<p>A thin-plate spline (see <a href="https://www.taylorfrancis.com/books/mono/10.1201/9781315370279/generalized-additive-models-simon-wood">Wood 2017</a>) estimates a smooth response to a continuous predictor. The <code>mgcv</code> package provides support for thin-plate splines and other smoothers.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(mgcv)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Using the package, we can estimate a smooth response to the predictor <code>age</code>, separately by the factor variable <code>sex</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">gam</span>(</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">log</span>(income) <span class="sc">~</span> sex <span class="sc">+</span> <span class="fu">s</span>(age, <span class="at">by =</span> sex),</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># For GAM, the "by" variable must be a factor.</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Make it a factor in the data line here.</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> simulated <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="at">sex =</span> <span class="fu">factor</span>(sex))</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Then make predictions.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>to_predict <span class="sc">|&gt;</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">log_yhat =</span> <span class="fu">predict</span>(fit, <span class="at">newdata =</span> to_predict)) <span class="sc">|&gt;</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">yhat =</span> <span class="fu">exp</span>(log_yhat))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 2 × 4
+  sex      age  log_yhat      yhat
+  &lt;chr&gt;  &lt;dbl&gt; &lt;dbl[1d]&gt; &lt;dbl[1d]&gt;
+1 female    30      10.6    41119.
+2 male      30      10.7    45992.</code></pre>
+</div>
+</div>
+<p>The graph below visualizes this fit.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="machine_learning_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="regression-tree" class="level2">
+<h2 class="anchored" data-anchor-id="regression-tree">Regression tree</h2>
+<p>A regression tree recursively partitions the data by repeatedly splitting into subsets (“branches”) so that the terminal nodes (“leaves”) are subgroups in which the outcome is relatively homogeneous. The algorithm predicts the mean within the subgroup. While there are many versions of decision trees, the most common makes splits to maximize heterogeneity of the mean response across the nodes and minimize heterogeneity within the nodes.</p>
+<p>The <code>rpart</code> package is one way to fit a regression trees,</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(rpart)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>which you can fit using a model formula as with OLS.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">rpart</span>(<span class="fu">log</span>(income) <span class="sc">~</span> sex <span class="sc">+</span> age, <span class="at">data =</span> simulated)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Then make predictions.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>to_predict <span class="sc">|&gt;</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">log_yhat =</span> <span class="fu">predict</span>(fit, <span class="at">newdata =</span> to_predict)) <span class="sc">|&gt;</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">yhat =</span> <span class="fu">exp</span>(log_yhat))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 2 × 4
+  sex      age log_yhat   yhat
+  &lt;chr&gt;  &lt;dbl&gt;    &lt;dbl&gt;  &lt;dbl&gt;
+1 female    30     10.7 43034.
+2 male      30     10.8 49341.</code></pre>
+</div>
+</div>
+<p>The graph below visualizes the fit that made these predictions.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="machine_learning_files/figure-html/unnamed-chunk-18-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="random-forest" class="level2">
+<h2 class="anchored" data-anchor-id="random-forest">Random forest</h2>
+<p>A random forest repeatedly estimates regression trees on different subsamples of the data. This induces variation across the trees so that the average of the trees is an ensemble estimator with good properties.</p>
+<p>The <a href="https://grf-labs.github.io/grf/"><code>grf</code></a> package <a href="https://projecteuclid.org/journals/annals-of-statistics/volume-47/issue-2/Generalized-random-forests/10.1214/18-AOS1709.full">(Athey, Tibshirani, and Wager 2019)</a> is one tool to estimate a random forest, with automated parameter tuning and other functionality available for causal goals.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(grf)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>To use the <code>regression_forest()</code> function, one first converts the predictors to a model matrix and the outcome to a vector. You will also need a model matrix at which to make predictions.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>X <span class="ot">&lt;-</span> <span class="fu">model.matrix</span>(<span class="sc">~</span> sex <span class="sc">+</span> age, <span class="at">data =</span> simulated)</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>Y <span class="ot">&lt;-</span> <span class="fu">log</span>(simulated<span class="sc">$</span>income)</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>X_to_predict <span class="ot">&lt;-</span> <span class="fu">model.matrix</span>(<span class="sc">~</span> sex <span class="sc">+</span> age, <span class="at">data =</span> to_predict)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>With these prepared inputs, estimate the forest.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">regression_forest</span>(</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">X =</span> X,</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">Y =</span> Y,</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">tune.parameters =</span> <span class="st">"all"</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Then make predictions.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>to_predict <span class="sc">|&gt;</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">log_yhat =</span> <span class="fu">predict</span>(fit, <span class="at">newdata =</span> X_to_predict)<span class="sc">$</span>predictions) <span class="sc">|&gt;</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">yhat =</span> <span class="fu">exp</span>(log_yhat))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 2 × 4
+  sex      age log_yhat   yhat
+  &lt;chr&gt;  &lt;dbl&gt;    &lt;dbl&gt;  &lt;dbl&gt;
+1 female    30     10.7 42947.
+2 male      30     10.8 48049.</code></pre>
+</div>
+</div>
+<p>The graph below visualizes this fit.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="machine_learning_files/figure-html/unnamed-chunk-23-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="closing-thoughts" class="level2">
+<h2 class="anchored" data-anchor-id="closing-thoughts">Closing thoughts</h2>
+<p>Many machine learning approaches become available to you when you follow a <span class="math inline">\(\hat{Y}\)</span> recipe for descriptive modeling.</p>
+<ol type="1">
+<li>Define the learning data (e.g., <code>simulated</code>)</li>
+<li>Define the predictor values at which to predict (e.g., <code>to_predict</code>)</li>
+<li>Make predictions</li>
+</ol>
+<p>This recipe works just as well even when models do not involve coefficients!</p>
+</section>
+<section id="code-for-stata-users" class="level2">
+<h2 class="anchored" data-anchor-id="code-for-stata-users">Code for Stata users</h2>
+<p>This code assumes you have already generated a sample as at the bottom of the <a href="simulate_a_sample">Simulate a Sample</a> page. The code below makes a prediction using OLS.</p>
+<p>Note: I am mostly not a Stata user, and this is provided for secondary pedadogical purposes in case some people do not use R. If you are a Stata user, feel free to let me know how to improve this code.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="sc">*</span> Estimate a linear model</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>reg log_income sex age c.age<span class="co">#i.sex</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="sc">*</span> Preserve current data and remove from memory</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>preserve</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>clear</span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a><span class="sc">*</span> Create new data to predict</span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>input str6 sex float age</span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a><span class="st">"female"</span> <span class="dv">30</span></span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a><span class="st">"male"</span> <span class="dv">30</span></span>
+<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a>end</span>
+<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a>encode sex, <span class="fu">gen</span>(factorsex)</span>
+<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a>keep age factorsex</span>
+<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a>rename factorsex sex</span>
+<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a><span class="sc">*</span> Make predictions</span>
+<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a>predict log_yhat</span>
+<span id="cb23-19"><a href="#cb23-19" aria-hidden="true" tabindex="-1"></a>gen yhat <span class="ot">=</span> <span class="fu">exp</span>(log_yhat)</span>
+<span id="cb23-20"><a href="#cb23-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-21"><a href="#cb23-21" aria-hidden="true" tabindex="-1"></a><span class="sc">*</span> Print predicted values</span>
+<span id="cb23-22"><a href="#cb23-22" aria-hidden="true" tabindex="-1"></a>list</span>
+<span id="cb23-23"><a href="#cb23-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-24"><a href="#cb23-24" aria-hidden="true" tabindex="-1"></a><span class="sc">*</span> Restore the original simulated data</span>
+<span id="cb23-25"><a href="#cb23-25" aria-hidden="true" tabindex="-1"></a>restore</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
 
 
 </section>

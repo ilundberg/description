@@ -139,6 +139,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">Evaluate Models</span></a>
   </li>  
   <li class="nav-item">
+    <a class="nav-link" href="./machine_learning.html"> 
+<span class="menu-text">Machine Learning</span></a>
+  </li>  
+  <li class="nav-item">
     <a class="nav-link" href="./challenge.html"> 
 <span class="menu-text">Challenge Exercise</span></a>
   </li>  
@@ -153,8 +157,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
-        
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#code-for-stata-users" id="toc-code-for-stata-users" class="nav-link active" data-scroll-target="#code-for-stata-users">Code for Stata users</a></li>
+  </ul>
+</nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -179,6 +189,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 <p>This exercise works with simulated samples. Taking the <a href="assets/truth.csv">nonparametric estimates</a> from 5 million cases as the truth, you will generate a simulated sample of a much smaller size using the code below.</p>
+<p>If you are a Stata user, see the bottom of this page for code. The page mainly supports coding in R.</p>
 <p>Prepare the environment by loading the <code>tidyverse</code> package.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -192,7 +203,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(year, age, sex, income)</span>
 <span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>We can see how it works below.</p>
+<p>We can see how it works below,</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>simulated <span class="ot">&lt;-</span> <span class="fu">simulate</span>(<span class="at">n =</span> <span class="dv">100</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
@@ -206,19 +217,50 @@ dbl (5): year, age, meanlog, sdlog, weight
 ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
 </div>
 </div>
+<p>and can print a bit of the output.</p>
 <div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>simulated <span class="sc">|&gt;</span> <span class="fu">print</span>(<span class="at">n =</span> <span class="dv">3</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 100 × 4
-   year   age sex     income
-  &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;    &lt;dbl&gt;
-1  2010    30 male    16882.
-2  2013    36 male    22048.
-3  2017    45 female 154609.
+   year   age sex    income
+  &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;   &lt;dbl&gt;
+1  2014    36 male  110880.
+2  2019    38 male   13369.
+3  2010    39 male   16418.
 # ℹ 97 more rows</code></pre>
 </div>
 </div>
+<section id="code-for-stata-users" class="level2">
+<h2 class="anchored" data-anchor-id="code-for-stata-users">Code for Stata users</h2>
+<p>I am mostly not a Stata user, and this is provided for secondary pedadogical purposes in case some people do not use R. If you are a Stata user, feel free to let me know how to improve this code.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>set seed <span class="dv">90095</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="sc">*</span> Load true population data</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>import delimited https<span class="sc">:</span><span class="er">//</span>ilundberg.github.io<span class="sc">/</span>description<span class="sc">/</span>assets<span class="sc">/</span>truth.csv</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="sc">*</span> Draw a sample of <span class="dv">100</span> X<span class="sc">-</span>values</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="sc">*</span> Need two supporting packages</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="sc">*</span>ssc install moremata</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="sc">*</span>ssc install gsample</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a><span class="sc">*</span> Draw the sample</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>gsample <span class="dv">100</span> [w <span class="ot">=</span> weight]</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a><span class="sc">*</span> Simulate individual income data</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>gen log_income <span class="ot">=</span> meanlog <span class="sc">+</span> sdlog <span class="sc">*</span> <span class="fu">rnormal</span>()</span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>gen income <span class="ot">=</span> <span class="fu">exp</span>(log_income)</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a><span class="sc">*</span> Keep variables to work with</span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>encode sex, <span class="fu">gen</span>(factorsex)</span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>keep year age factorsex log_income income</span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>rename factorsex sex</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
 
 
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">

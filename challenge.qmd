@@ -5,11 +5,13 @@ title: "Challenge Exercise"
 This exercise uses models to describe where we have **no data at all**.
 
 * data: male and female incomes at age 30--50 in 2010--2019
-* task: what was the male and female geometric mean pay at age 30--50 in **2022**?
+* task: forecast male and female geometric mean pay at age 30--50 in 2022
 
-Caution is always needed when carrying out model-based extrapolation. But when forecasting, a model is also often the only way to make progress.
+Generate data as on the [Simulate Data](simulate_a_sample) page. You can set the sample size however large you want. You can use any model you want.
 
-You can generate data as on the [Simulate Data](simulate_a_sample) page. You can set the sample size however large you want. You can use any model you want.
+Report your prediction in this [Google Form](https://forms.gle/UnfUmcLsrBZfLgNn9).
+
+## Things you might discuss
 
 You might discuss methodological choices:
 
@@ -20,9 +22,21 @@ You might also discuss conceptual issues:
 
 * why might we be hesitant to carry out this extrapolation?
 
-## An example to get you started
+## Example code to get you started
 
-As a simple example, I might simulate a sample of size 100,
+To run the code on this page, you will need the `tidyverse` package.
+
+```{r, message = F, warning = F, results = "hide"}
+library(tidyverse)
+```
+
+We will also set the seed so that it is possible to exactly reproduce these results.
+
+```{r}
+set.seed(90095)
+```
+
+As a simple example, you might simulate a sample of size 100,
 
 ```{r, echo = F, results = "hide", message = F, warning = F}
 library(tidyverse)
@@ -34,7 +48,7 @@ simulate <- function(n = 100) {
 }
 ```
 
-```{r, results = "hide"}
+```{r, results = "hide", message = F, warning = F, comment = F}
 simulated <- simulate(n = 100)
 ```
 
@@ -57,6 +71,61 @@ to_predict |>
     # Exponentiate to dollars
     estimate = exp(estimate)
   )
+```
+
+```{r, echo = F}
+p <- simulated |>
+  ggplot(aes(x = year, y = income, color = sex)) +
+  scale_y_continuous(
+    name = "Income\n(Log Scale)",
+    breaks = c(10e3,50e3,250e3),
+    labels = scales::label_dollar(), 
+    trans = "log"
+  ) +
+  scale_x_continuous(
+    breaks = c(seq(2010,2022,3)),
+    limits = c(2010,2022),
+    name = "Year"
+  ) +
+  geom_vline(xintercept = 2022, linewidth = 4, alpha = .2, color = "seagreen") +
+  scale_color_discrete(name = "Sex", labels = stringr::str_to_title)
+
+p +
+  geom_point()
+
+ggsave("slides/challenge_data.pdf", height = 3, width = 4)
+
+predicted <- simulated |>
+  bind_rows(tibble(
+    year = 2022, 
+    sex = c("female","male")
+  )) |>
+  mutate(
+    yhat = exp(predict(
+      fit, 
+      newdata = simulated |> 
+        bind_rows(tibble(
+          year = 2022, 
+          sex = c("female","male")
+        ))
+    )
+  ))
+
+p2 <- p + 
+  geom_point(alpha = .2) +
+  geom_line(
+    data = predicted,
+    aes(y = yhat)
+  )
+
+p3 <- p2 + 
+  geom_point(
+    data = predicted |> filter(year == 2022),
+    aes(y = yhat)
+  )
+
+ggsave("slides/challenge_line.pdf", plot = p2, height = 3, width = 4)
+ggsave("slides/challenge_forecast.pdf", plot = p3, height = 3, width = 4)
 ```
 
 ## What to try next

@@ -2,14 +2,22 @@
 title: "Why model?"
 ---
 
-```{r, echo = F, message = F, warning = F}
-library(tidyverse)
-```
-
 We model because
 
 * there is not enough data in our target subgroup
 * we have a good idea to share information with other cases
+
+To run the code on this page, you will need the `tidyverse` package.
+
+```{r, message = F, warning = F, results = "hide"}
+library(tidyverse)
+```
+
+We will also set the seed so that it is possible to exactly reproduce these results.
+
+```{r}
+set.seed(90095)
+```
 
 ## Generate an illustration sample
 
@@ -35,7 +43,7 @@ num_male <- simulated |>
   filter(age == 30 & sex == "male") |>
   nrow()
 while (num_female == 0 | num_male == 0) {
-  simulated <- simulate_2010(n = 100)
+  simulated <- simulate(n = 100)
   num_female <- simulated |>
     filter(age == 30 & sex == "female") |>
     nrow()
@@ -53,8 +61,6 @@ We will estimate three target quantities:
 * (1) geometric mean pay among female respondents age 30
 * (2) geometric mean pay among male respondents age 30
 * (3) ratio (1) / (2)
-
-
 
 In our sample, there are only `r num_female` female and `r num_male` male 30-year-olds! We will need a model.
 
@@ -146,6 +152,29 @@ estimators(
     labels = function(x) ifelse(x,"Target Subgroup","Other Cases"),
     values = c(1,16)
   )
+ggsave("slides/define_models.pdf", height = 3, width = 7)
+```
+
+```{r, echo = F, eval = F}
+# This is just a figure for slides
+truth |> 
+  mutate(truth = exp(meanlog)) |> 
+  rename(estimand = sex) |>
+  ggplot(aes(x = age, color = estimand)) +
+  geom_point(aes(y = truth, shape = age == 30)) +
+  ggtitle("Illustrated on full data: 5 million cases") +
+  scale_color_discrete(
+    name = "Sex Subgroup",
+    labels = c("Female","Male")
+  ) +
+  scale_x_continuous(name = "Age Subgroup") +
+  scale_y_continuous(name = "Geometric Mean Income\n(Log Scale)", labels = scales::label_dollar(), trans = "log") +
+  scale_shape_manual(
+    name = element_blank(),
+    labels = function(x) ifelse(x,"Target Subgroup","Other Cases"),
+    values = c(1,16)
+  )
+ggsave("slides/true_age_pattern.pdf", height = 3, width = 5)
 ```
 
 We will use these models for a task: estimate the geometric mean pay among 30-year-old male and female respondents. We will carry out the task in a simulated sample of 100 respondents.

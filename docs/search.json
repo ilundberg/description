@@ -4,14 +4,21 @@
     "href": "challenge.html",
     "title": "Challenge Exercise",
     "section": "",
-    "text": "This exercise uses models to describe where we have no data at all.\nCaution is always needed when carrying out model-based extrapolation. But when forecasting, a model is also often the only way to make progress.\nYou can generate data as on the Simulate Data page. You can set the sample size however large you want. You can use any model you want.\nYou might discuss methodological choices:\nYou might also discuss conceptual issues:"
+    "text": "This exercise uses models to describe where we have no data at all.\nGenerate data as on the Simulate Data page. You can set the sample size however large you want. You can use any model you want.\nReport your prediction in this Google Form."
   },
   {
-    "objectID": "challenge.html#an-example-to-get-you-started",
-    "href": "challenge.html#an-example-to-get-you-started",
+    "objectID": "challenge.html#things-you-might-discuss",
+    "href": "challenge.html#things-you-might-discuss",
     "title": "Challenge Exercise",
-    "section": "An example to get you started",
-    "text": "An example to get you started\nAs a simple example, I might simulate a sample of size 100,\n\nsimulated &lt;- simulate(n = 100)\n\nRows: 420 Columns: 6\n── Column specification ────────────────────────────────────────────────────────\nDelimiter: \",\"\nchr (1): sex\ndbl (5): year, age, meanlog, sdlog, weight\n\nℹ Use `spec()` to retrieve the full column specification for this data.\nℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.\n\n\nestimate a linear model on those data,\n\nfit &lt;- lm(log(income) ~ sex * year, data = simulated)\n\nand report predictions in 2022.\n\nto_predict &lt;- tibble(\n  sex = c(\"female\",\"male\"),\n  year = c(2022,2022)\n)\nto_predict |&gt;\n  mutate(\n    # Make prediction\n    estimate = predict(fit, newdata = to_predict),\n    # Exponentiate to dollars\n    estimate = exp(estimate)\n  )\n\n# A tibble: 2 × 3\n  sex     year estimate\n  &lt;chr&gt;  &lt;dbl&gt;    &lt;dbl&gt;\n1 female  2022   62929.\n2 male    2022   52708."
+    "section": "Things you might discuss",
+    "text": "Things you might discuss\nYou might discuss methodological choices:\n\nhow would you generate an evaluation set for this problem?\nwhat models do you think would work well?\n\nYou might also discuss conceptual issues:\n\nwhy might we be hesitant to carry out this extrapolation?"
+  },
+  {
+    "objectID": "challenge.html#example-code-to-get-you-started",
+    "href": "challenge.html#example-code-to-get-you-started",
+    "title": "Challenge Exercise",
+    "section": "Example code to get you started",
+    "text": "Example code to get you started\nTo run the code on this page, you will need the tidyverse package.\n\nlibrary(tidyverse)\n\nWe will also set the seed so that it is possible to exactly reproduce these results.\n\nset.seed(90095)\n\nAs a simple example, you might simulate a sample of size 100,\n\nsimulated &lt;- simulate(n = 100)\n\nestimate a linear model on those data,\n\nfit &lt;- lm(log(income) ~ sex * year, data = simulated)\n\nand report predictions in 2022.\n\nto_predict &lt;- tibble(\n  sex = c(\"female\",\"male\"),\n  year = c(2022,2022)\n)\nto_predict |&gt;\n  mutate(\n    # Make prediction\n    estimate = predict(fit, newdata = to_predict),\n    # Exponentiate to dollars\n    estimate = exp(estimate)\n  )\n\n# A tibble: 2 × 3\n  sex     year estimate\n  &lt;chr&gt;  &lt;dbl&gt;    &lt;dbl&gt;\n1 female  2022   81777.\n2 male    2022   76336."
   },
   {
     "objectID": "challenge.html#what-to-try-next",
@@ -19,111 +26,6 @@
     "title": "Challenge Exercise",
     "section": "What to try next",
     "text": "What to try next\nYou might consider different functional forms, the overall mean, or machine learning estimators."
-  },
-  {
-    "objectID": "simulate_a_sample.html",
-    "href": "simulate_a_sample.html",
-    "title": "Simulate Data",
-    "section": "",
-    "text": "This exercise works with simulated samples. Taking the nonparametric estimates from 5 million cases as the truth, you will generate a simulated sample of a much smaller size using the code below.\nPrepare the environment by loading the tidyverse package.\n\nlibrary(tidyverse)\n\nThe function below simulates a sample of 100 cases.\n\nsimulate &lt;- function(n = 100) {\n  read_csv(\"https://ilundberg.github.io/description/assets/truth.csv\") |&gt;\n    slice_sample(n = n, weight_by = weight, replace = T) |&gt;\n    mutate(income = exp(rnorm(n(), meanlog, sdlog))) |&gt;\n    select(year, age, sex, income)\n}\n\nWe can see how it works below.\n\nsimulated &lt;- simulate(n = 100)\n\nRows: 420 Columns: 6\n── Column specification ────────────────────────────────────────────────────────\nDelimiter: \",\"\nchr (1): sex\ndbl (5): year, age, meanlog, sdlog, weight\n\nℹ Use `spec()` to retrieve the full column specification for this data.\nℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.\n\n\n\n\n# A tibble: 100 × 4\n   year   age sex     income\n  &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;    &lt;dbl&gt;\n1  2010    30 male    16882.\n2  2013    36 male    22048.\n3  2017    45 female 154609.\n# ℹ 97 more rows"
-  },
-  {
-    "objectID": "evaluate.html",
-    "href": "evaluate.html",
-    "title": "Evaluate Models",
-    "section": "",
-    "text": "This page presents a \\(\\hat{Y}\\) view of what it means for one model to outperform another model. We first discuss in a simulated setting where we generate many samples from the population and directly observe performance of estimators across those simulated samples. Then, we discuss how one can evaluate performance in the more realistic setting in which only one sample from the population is available,"
-  },
-  {
-    "objectID": "evaluate.html#estimator-functions",
-    "href": "evaluate.html#estimator-functions",
-    "title": "Evaluate Models",
-    "section": "Estimator functions",
-    "text": "Estimator functions\nThe functions below is an estimator: it take data in and returns estimates. This function can be applied with the flat, linear, and quadratic models defiend on the previous page.\n\nestimator &lt;- function(\n    data, # from simulate()\n    model_name # one of \"flat\", \"linear\", \"quadratic\"\n) {\n  # Estimate a regression model\n  if (model_name == \"flat\") {\n    fit &lt;- lm(log(income) ~ sex, data = data)\n  } else if (model_name == \"linear\") {\n    fit &lt;- lm(log(income) ~ sex * age, data = data)\n  } else if (model_name == \"quadratic\") {\n    fit &lt;- lm(log(income) ~ sex * poly(age,2), data = data)\n  }\n  # Define x-values at which to make predictions\n  to_predict &lt;- tibble(\n    sex = c(\"female\",\"male\"),\n    age = c(30,30)\n  )\n  # Make predictions\n  predicted &lt;- to_predict |&gt;\n    mutate(estimate = predict(fit, newdata = to_predict)) |&gt;\n    # Transform from log scale to dollars scale\n    mutate(estimate = exp(estimate)) |&gt;\n    # Append information for summarizing later\n    mutate(\n      model_name = model_name,\n      sample_size = nrow(data)\n    )\n  # Return the predicted estimates\n  return(predicted)\n}\n\nAs an illustration, here is the linear estimator applied to a simulated sample\n\nsimulated &lt;- simulate(n = 100)\n\nRows: 420 Columns: 6\n── Column specification ────────────────────────────────────────────────────────\nDelimiter: \",\"\nchr (1): sex\ndbl (5): year, age, meanlog, sdlog, weight\n\nℹ Use `spec()` to retrieve the full column specification for this data.\nℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.\n\n\n\nestimator(data = simulated, model_name = \"linear\")\n\n# A tibble: 2 × 5\n  sex      age estimate model_name sample_size\n  &lt;chr&gt;  &lt;dbl&gt;    &lt;dbl&gt; &lt;chr&gt;            &lt;int&gt;\n1 female    30   35102. linear             100\n2 male      30   46860. linear             100"
-  },
-  {
-    "objectID": "evaluate.html#apply-estimators-in-repeated-samples",
-    "href": "evaluate.html#apply-estimators-in-repeated-samples",
-    "title": "Evaluate Models",
-    "section": "Apply estimators in repeated samples",
-    "text": "Apply estimators in repeated samples\nHow do our estimators perform in repeated samples? In actual problems, one only has one sample. But we created this exercise so that we can use simulate() to simulate many samples from a known data generating process. The code below applies the estimator to many samples of size 100.\nWe first prepare for parallel computing.\n\nlibrary(foreach)\nlibrary(doParallel)\nlibrary(doRNG)\ncl &lt;- makeCluster(detectCores())\nregisterDoParallel(cl)\n\nThen we apply the estimator many times at each of a series of sample sizes.\n\nsimulations &lt;- foreach(\n  repetition = 1:1000, \n  .combine = \"rbind\", \n  .packages = \"tidyverse\"\n) %dorng% {\n  foreach(n_value = c(50,100,200,500,1000), .combine = \"rbind\") %do% {\n    # Simulate data\n    simulated &lt;- simulate(n = n_value)\n    # Apply the three estimators\n    flat &lt;- estimator(data = simulated, model_name = \"flat\")\n    linear &lt;- estimator(data = simulated, model_name = \"linear\")\n    quadratic &lt;- estimator(data = simulated, model_name = \"quadratic\")\n    # Return estimates\n    all_estimates &lt;- rbind(flat, linear, quadratic)\n    return(all_estimates)\n  }\n}"
-  },
-  {
-    "objectID": "evaluate.html#visualize-estimator-performance",
-    "href": "evaluate.html#visualize-estimator-performance",
-    "title": "Evaluate Models",
-    "section": "Visualize estimator performance",
-    "text": "Visualize estimator performance\nFor simplicity, we first focus on one estimand and sample size: modeling the geometric mean of 30-year-old female incomes with a sample size of \\(n = 100\\). Despite having good performance in the population, the quadratic model has poor performance at this sample size because it has high variance!\n\n\n\n\n\n\n\n\n\nTo aggregate simulations to a summary score, we use mean squared error (MSE) on the scale of log incomes.\n\\[\\begin{aligned}\n\\theta(\\vec{x}) &= \\text{True geometric mean in subgroup }\\vec{x} \\\\\n\\hat\\theta_r(\\vec{x}) &= \\text{Estimated geometric mean in subgroup }\\vec{x}\\text{ in simulated sample }r \\\\\n\\widehat{\\text{MSE}}\\bigg(\\hat\\theta(\\vec{x})\\bigg) &= \\frac{1}{R}\\sum_{r=1}^R \\left(\\text{log}(\\hat\\theta) - \\text{log}(\\theta)\\right)^2\n\\end{aligned}\\]\nThe figure below reports MSE for each estimator at each sample size."
-  },
-  {
-    "objectID": "evaluate.html#conclusions",
-    "href": "evaluate.html#conclusions",
-    "title": "Evaluate Models",
-    "section": "Conclusions",
-    "text": "Conclusions\nThe results indicate that\n\nin a small sample (\\(n = 50\\)), the flat model is best\nthe linear model becomes best\n\nat \\(n = 100\\) for the male subgroup\nat \\(n = 500\\) for the female subgroup\n\nthe quadratic model becomes best\n\nat \\(n = 1,000\\) in the male subgroup\nat some higher sample size in the female subgroup\n\n\nThere are two main conclusions from this illustration. Which estimator is best is a question that\n\ndepends on the estimand (male or female subgroup), and\ndepends on the sample size\n\nFurther, although the quadratic fit is best in the population (previous page), a very large sample size is needed before it is best in a sample. This is a reminder that more complex models do not necessarily outperform simpler models, especially in small samples."
-  },
-  {
-    "objectID": "evaluate.html#split-into-learning-and-evaluation-sets",
-    "href": "evaluate.html#split-into-learning-and-evaluation-sets",
-    "title": "Evaluate Models",
-    "section": "Split into learning and evaluation sets",
-    "text": "Split into learning and evaluation sets\nCreate a learning set with half of the cases.\n\nlearning &lt;- simulated |&gt;\n  slice_sample(prop = .5)\n\nCreate an evaluation set with the other half.\n\nevaluation &lt;- simulated |&gt;\n  anti_join(learning, by = join_by(id))"
-  },
-  {
-    "objectID": "evaluate.html#estimate-models-in-the-learning-set",
-    "href": "evaluate.html#estimate-models-in-the-learning-set",
-    "title": "Evaluate Models",
-    "section": "Estimate models in the learning set",
-    "text": "Estimate models in the learning set\nNext, estimate the models in the learning set.\n\nflat &lt;- lm(log(income) ~ sex, data = learning)\nlinear &lt;- lm(log(income) ~ sex * age, data = learning)\nquadratic &lt;- lm(log(income) ~ sex * poly(age,2), data = learning)"
-  },
-  {
-    "objectID": "evaluate.html#evaluate-in-the-evaluation-set",
-    "href": "evaluate.html#evaluate-in-the-evaluation-set",
-    "title": "Evaluate Models",
-    "section": "Evaluate in the evaluation set",
-    "text": "Evaluate in the evaluation set\nUse them to predict in the evaluation set.\n\npredicted &lt;- evaluation |&gt;\n  mutate(\n    flat = predict(flat, newdata = evaluation),\n    linear = predict(linear, newdata = evaluation),\n    quadratic = predict(quadratic, newdata = evaluation)\n  )\n\nAggregate prediction errors in the evaluation set to produce mean squared error estimates for each model.\n\nperformance &lt;- predicted |&gt;\n  # Select the actual and predicted values\n  mutate(actual = log(income)) |&gt;\n  select(actual, flat, linear, quadratic) |&gt;\n  # Make a long dataset for ease of analysis\n  pivot_longer(cols = -actual, names_to = \"model_name\", values_to = \"prediction\") |&gt;\n  # Create a column with errors\n  mutate(squared_error = (actual - prediction) ^ 2) |&gt;\n  # Summarize mean squared error\n  group_by(model_name) |&gt;\n  summarize(mse = mean(squared_error)) |&gt;\n  print()\n\n# A tibble: 3 × 2\n  model_name   mse\n  &lt;chr&gt;      &lt;dbl&gt;\n1 flat       0.619\n2 linear     0.618\n3 quadratic  0.655\n\n\nOur split-sample procedure estimates that the linear model has the best performance!"
-  },
-  {
-    "objectID": "evaluate.html#difficulties-in-split-sample-model-evaluation",
-    "href": "evaluate.html#difficulties-in-split-sample-model-evaluation",
-    "title": "Evaluate Models",
-    "section": "Difficulties in split-sample model evaluation",
-    "text": "Difficulties in split-sample model evaluation\n\nthe estimated performance may itself be statistically uncertain\nif the best model in one subgroup is different from the best in another subgroup, then a sample-average MSE may not be optimal for selecting for our task"
-  },
-  {
-    "objectID": "define_models.html",
-    "href": "define_models.html",
-    "title": "Why model?",
-    "section": "",
-    "text": "We model because"
-  },
-  {
-    "objectID": "define_models.html#generate-an-illustration-sample",
-    "href": "define_models.html#generate-an-illustration-sample",
-    "title": "Why model?",
-    "section": "Generate an illustration sample",
-    "text": "Generate an illustration sample\nThe code below will generate a sample of 100 respondents simulated to correspond to the target population ages 30–50 in 2010–2019.\n\nsimulate &lt;- function(n = 100) {\n  read_csv(\"assets/truth.csv\") |&gt;\n    slice_sample(n = n, weight_by = weight, replace = T) |&gt;\n    mutate(income = exp(rnorm(n(), meanlog, sdlog))) |&gt;\n    select(year, age, sex, income)\n}\n\n\nsimulated &lt;- simulate(n = 100)\n\n\n\n# A tibble: 100 × 4\n   year   age sex    income\n  &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;   &lt;dbl&gt;\n1  2014    40 male   34984.\n2  2011    49 male   27677.\n3  2019    49 female 10747.\n# ℹ 97 more rows"
-  },
-  {
-    "objectID": "define_models.html#target-estimand",
-    "href": "define_models.html#target-estimand",
-    "title": "Why model?",
-    "section": "Target estimand",
-    "text": "Target estimand\nWe will estimate three target quantities:\n\n\ngeometric mean pay among female respondents age 30\n\n\ngeometric mean pay among male respondents age 30\n\n\nratio (1) / (2)\n\n\nIn our sample, there are only 2 female and 4 male 30-year-olds! We will need a model."
-  },
-  {
-    "objectID": "define_models.html#models-for-illustration",
-    "href": "define_models.html#models-for-illustration",
-    "title": "Why model?",
-    "section": "Models for illustration",
-    "text": "Models for illustration\nWe consider a series of three models.\n\nFlat model: Geometric mean among everyone\nLinear model: Prediction from linear fit on age \\(\\times\\) sex\nQuadratic model: Prediction from quadratic fit on age \\(\\times\\) sex\n\nRecall that each model is a tool to share information from other cases in order to predict an estimate for the target subgroups: 30-year-old male and female respondents.\n\n\nRows: 420 Columns: 6\n── Column specification ────────────────────────────────────────────────────────\nDelimiter: \",\"\nchr (1): sex\ndbl (5): year, age, meanlog, sdlog, weight\n\nℹ Use `spec()` to retrieve the full column specification for this data.\nℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.\n`summarise()` has grouped output by 'sex'. You can override using the `.groups` argument.\n\n\n\n\n\n\n\n\n\nWe will use these models for a task: estimate the geometric mean pay among 30-year-old male and female respondents. We will carry out the task in a simulated sample of 100 respondents."
-  },
-  {
-    "objectID": "define_models.html#which-model-would-you-choose",
-    "href": "define_models.html#which-model-would-you-choose",
-    "title": "Why model?",
-    "section": "Which model would you choose?",
-    "text": "Which model would you choose?\nThink about an answer before going on to the next page."
   },
   {
     "objectID": "index.html",
@@ -159,5 +61,173 @@
     "title": "Description: Using models to describe",
     "section": "The choice",
     "text": "The choice\nWe would prefer\n\nmodel-free description when there are enough cases\nmodel-based description when data are scarce\n\nas long as our model pools information effectively. Data can help us decide!\nWhat comes next:\n\nfirst generate some simulated data\nthen apply a model-free estimator\nthen apply an OLS model-based estimator\nthen apply a more flexible spline estimator"
+  },
+  {
+    "objectID": "define_models.html",
+    "href": "define_models.html",
+    "title": "Why model?",
+    "section": "",
+    "text": "We model because\nTo run the code on this page, you will need the tidyverse package.\nlibrary(tidyverse)\nWe will also set the seed so that it is possible to exactly reproduce these results.\nset.seed(90095)"
+  },
+  {
+    "objectID": "define_models.html#generate-an-illustration-sample",
+    "href": "define_models.html#generate-an-illustration-sample",
+    "title": "Why model?",
+    "section": "Generate an illustration sample",
+    "text": "Generate an illustration sample\nThe code below will generate a sample of 100 respondents simulated to correspond to the target population ages 30–50 in 2010–2019.\n\nsimulate &lt;- function(n = 100) {\n  read_csv(\"assets/truth.csv\") |&gt;\n    slice_sample(n = n, weight_by = weight, replace = T) |&gt;\n    mutate(income = exp(rnorm(n(), meanlog, sdlog))) |&gt;\n    select(year, age, sex, income)\n}\n\n\nsimulated &lt;- simulate(n = 100)\n\n\n\n# A tibble: 100 × 4\n   year   age sex    income\n  &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;   &lt;dbl&gt;\n1  2011    48 female 24697.\n2  2012    38 female 82433.\n3  2013    38 female 86219.\n# ℹ 97 more rows"
+  },
+  {
+    "objectID": "define_models.html#target-estimand",
+    "href": "define_models.html#target-estimand",
+    "title": "Why model?",
+    "section": "Target estimand",
+    "text": "Target estimand\nWe will estimate three target quantities:\n\n\ngeometric mean pay among female respondents age 30\n\n\ngeometric mean pay among male respondents age 30\n\n\nratio (1) / (2)\n\n\nIn our sample, there are only 3 female and 6 male 30-year-olds! We will need a model."
+  },
+  {
+    "objectID": "define_models.html#models-for-illustration",
+    "href": "define_models.html#models-for-illustration",
+    "title": "Why model?",
+    "section": "Models for illustration",
+    "text": "Models for illustration\nWe consider a series of three models.\n\nFlat model: Geometric mean among everyone\nLinear model: Prediction from linear fit on age \\(\\times\\) sex\nQuadratic model: Prediction from quadratic fit on age \\(\\times\\) sex\n\nRecall that each model is a tool to share information from other cases in order to predict an estimate for the target subgroups: 30-year-old male and female respondents.\n\n\nRows: 420 Columns: 6\n── Column specification ────────────────────────────────────────────────────────\nDelimiter: \",\"\nchr (1): sex\ndbl (5): year, age, meanlog, sdlog, weight\n\nℹ Use `spec()` to retrieve the full column specification for this data.\nℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.\n`summarise()` has grouped output by 'sex'. You can override using the `.groups` argument.\n\n\n\n\n\n\n\n\n\nWe will use these models for a task: estimate the geometric mean pay among 30-year-old male and female respondents. We will carry out the task in a simulated sample of 100 respondents."
+  },
+  {
+    "objectID": "define_models.html#which-model-would-you-choose",
+    "href": "define_models.html#which-model-would-you-choose",
+    "title": "Why model?",
+    "section": "Which model would you choose?",
+    "text": "Which model would you choose?\nThink about an answer before going on to the next page."
+  },
+  {
+    "objectID": "evaluate.html",
+    "href": "evaluate.html",
+    "title": "Evaluate Models",
+    "section": "",
+    "text": "This page presents a \\(\\hat{Y}\\) view of what it means for one model to outperform another model. We first discuss in a simulated setting where we generate many samples from the population and directly observe performance of estimators across those simulated samples. Then, we discuss how one can evaluate performance in the more realistic setting in which only one sample from the population is available.\nTo run the code on this page, you will need the tidyverse package.\nlibrary(tidyverse)\nWe will also set the seed so that it is possible to exactly reproduce these results.\nset.seed(90095)"
+  },
+  {
+    "objectID": "evaluate.html#estimator-functions",
+    "href": "evaluate.html#estimator-functions",
+    "title": "Evaluate Models",
+    "section": "Estimator functions",
+    "text": "Estimator functions\nThe functions below is an estimator: it take data in and returns estimates. This function can be applied with the flat, linear, and quadratic models defiend on the previous page.\n\nestimator &lt;- function(\n    data, # from simulate()\n    model_name # one of \"flat\", \"linear\", \"quadratic\"\n) {\n  # Estimate a regression model\n  if (model_name == \"flat\") {\n    fit &lt;- lm(log(income) ~ sex, data = data)\n  } else if (model_name == \"linear\") {\n    fit &lt;- lm(log(income) ~ sex * age, data = data)\n  } else if (model_name == \"quadratic\") {\n    fit &lt;- lm(log(income) ~ sex * poly(age,2), data = data)\n  }\n  # Define x-values at which to make predictions\n  to_predict &lt;- tibble(\n    sex = c(\"female\",\"male\"),\n    age = c(30,30)\n  )\n  # Make predictions\n  predicted &lt;- to_predict |&gt;\n    mutate(estimate = predict(fit, newdata = to_predict)) |&gt;\n    # Transform from log scale to dollars scale\n    mutate(estimate = exp(estimate)) |&gt;\n    # Append information for summarizing later\n    mutate(\n      model_name = model_name,\n      sample_size = nrow(data)\n    )\n  # Return the predicted estimates\n  return(predicted)\n}\n\nAs an illustration, here is the linear estimator applied to a simulated sample\n\nsimulated &lt;- simulate(n = 100)\n\n\nestimator(data = simulated, model_name = \"linear\")\n\n# A tibble: 2 × 5\n  sex      age estimate model_name sample_size\n  &lt;chr&gt;  &lt;dbl&gt;    &lt;dbl&gt; &lt;chr&gt;            &lt;int&gt;\n1 female    30   38436. linear             100\n2 male      30   51877. linear             100"
+  },
+  {
+    "objectID": "evaluate.html#apply-estimators-in-repeated-samples",
+    "href": "evaluate.html#apply-estimators-in-repeated-samples",
+    "title": "Evaluate Models",
+    "section": "Apply estimators in repeated samples",
+    "text": "Apply estimators in repeated samples\nHow do our estimators perform in repeated samples? In actual problems, one only has one sample. But we created this exercise so that we can use simulate() to simulate many samples from a known data generating process. The code below applies the estimator to many samples of size 100.\nWe first prepare for parallel computing.\n\nlibrary(foreach)\nlibrary(doParallel)\nlibrary(doRNG)\ncl &lt;- makeCluster(detectCores())\nregisterDoParallel(cl)\n\nThen we apply the estimator many times at each of a series of sample sizes.\n\nsimulations &lt;- foreach(\n  repetition = 1:1000, \n  .combine = \"rbind\", \n  .packages = \"tidyverse\"\n) %dorng% {\n  foreach(n_value = c(50,100,200,500,1000), .combine = \"rbind\") %do% {\n    # Simulate data\n    simulated &lt;- simulate(n = n_value)\n    # Apply the three estimators\n    flat &lt;- estimator(data = simulated, model_name = \"flat\")\n    linear &lt;- estimator(data = simulated, model_name = \"linear\")\n    quadratic &lt;- estimator(data = simulated, model_name = \"quadratic\")\n    # Return estimates\n    all_estimates &lt;- rbind(flat, linear, quadratic)\n    return(all_estimates)\n  }\n}"
+  },
+  {
+    "objectID": "evaluate.html#visualize-estimator-performance",
+    "href": "evaluate.html#visualize-estimator-performance",
+    "title": "Evaluate Models",
+    "section": "Visualize estimator performance",
+    "text": "Visualize estimator performance\nFor simplicity, we first focus on one estimand and sample size: modeling the geometric mean of 30-year-old female incomes with a sample size of \\(n = 100\\). Despite having good performance in the population, the quadratic model has poor performance at this sample size because it has high variance!\n\n\n\n\n\n\n\n\n\nTo aggregate simulations to a summary score, we use mean squared error (MSE) on the scale of log incomes.\n\\[\\begin{aligned}\n\\theta(\\vec{x}) &= \\text{True geometric mean in subgroup }\\vec{x} \\\\\n\\hat\\theta_r(\\vec{x}) &= \\text{Estimated geometric mean in subgroup }\\vec{x}\\text{ in simulated sample }r \\\\\n\\widehat{\\text{MSE}}\\bigg(\\hat\\theta(\\vec{x})\\bigg) &= \\frac{1}{R}\\sum_{r=1}^R \\left(\\text{log}(\\hat\\theta) - \\text{log}(\\theta)\\right)^2\n\\end{aligned}\\]\nTo calculate the MSE, we need the true values from our simulation. The code below is somewhat opaque because it requires you to know something about how we generated the data. In this code, meanlog is the mean log income in each sex \\(\\times\\) age \\(\\times\\) year subgroup, estimated in the full ACS. The weight corresponds to the size of the subgroup; later years have greater weight because the total population was greater then, for example. We aggregate to truth within sex \\(\\times\\) age subgroups.\n\ntruth &lt;- read_csv(\"https://ilundberg.github.io/description/assets/truth.csv\") |&gt;\n  group_by(sex, age) |&gt;\n  summarize(\n    truth = exp(weighted.mean(meanlog, w = weight)),\n    .groups = \"drop\"\n  )\n\nThe code below merges the truth with the simulated estimates and calculates aggregate performance metrics: bias, variance, and mean squared error.\n\naggregate_performance &lt;- simulations |&gt;\n  # Merge in the true values from the simulation\n  left_join(truth, by = join_by(sex, age)) |&gt;\n  # Convert to log scale\n  mutate(\n    estimate = log(estimate), \n    truth = log(truth)\n  ) |&gt;\n  # Calculate aggregate performance within\n  # population subgroups (sex, age)\n  # and simulation settings (model_name, sample_size)\n  group_by(sex, age, model_name, sample_size) |&gt;\n  summarize(\n    bias = mean(estimate - truth),\n    variance = var(estimate),\n    mse = mean((estimate - truth) ^ 2),\n    .groups = \"drop\"\n  )\n\nThe graph below visualizes aggregate performance measured by mean squared error."
+  },
+  {
+    "objectID": "evaluate.html#conclusions-many-samples-simulation",
+    "href": "evaluate.html#conclusions-many-samples-simulation",
+    "title": "Evaluate Models",
+    "section": "Conclusions: Many-samples simulation",
+    "text": "Conclusions: Many-samples simulation\nThe results show how the more complex models perform better than simpler models only at larger sample sizes.\nFor the male subgroup,\n\na flat model is best at \\(n = 50\\)\na linear model becomes best at \\(n = 100\\)\na quadratic model becomes best at $n ={}$1,000\n\nFor the female subgroup,\n\na flat model is best at \\(n = 50, 100, 200\\)\na linear model becomes best at \\(n = 500\\)\na quadratic model may become best at an untested sample size greater than $n ={}$1,000\n\nThere are two main conclusions from this illustration. Which estimator is best is a question that\n\ndepends on the estimand (male or female subgroup), and\ndepends on the sample size\n\nFurther, although the quadratic fit is best in the population (previous page), a very large sample size is needed before it is best in a sample. This is a reminder that more complex models do not necessarily outperform simpler models, especially in small samples."
+  },
+  {
+    "objectID": "evaluate.html#split-into-learning-and-evaluation-sets",
+    "href": "evaluate.html#split-into-learning-and-evaluation-sets",
+    "title": "Evaluate Models",
+    "section": "Split into learning and evaluation sets",
+    "text": "Split into learning and evaluation sets\nCreate a learning set with half of the cases.\n\nlearning &lt;- simulated |&gt;\n  slice_sample(prop = .5)\n\nCreate an evaluation set with the other half.\n\nevaluation &lt;- simulated |&gt;\n  anti_join(learning, by = join_by(id))"
+  },
+  {
+    "objectID": "evaluate.html#estimate-models-in-the-learning-set",
+    "href": "evaluate.html#estimate-models-in-the-learning-set",
+    "title": "Evaluate Models",
+    "section": "Estimate models in the learning set",
+    "text": "Estimate models in the learning set\nNext, estimate the models in the learning set.\n\nflat &lt;- lm(log(income) ~ sex, data = learning)\nlinear &lt;- lm(log(income) ~ sex * age, data = learning)\nquadratic &lt;- lm(log(income) ~ sex * poly(age,2), data = learning)"
+  },
+  {
+    "objectID": "evaluate.html#evaluate-in-the-evaluation-set",
+    "href": "evaluate.html#evaluate-in-the-evaluation-set",
+    "title": "Evaluate Models",
+    "section": "Evaluate in the evaluation set",
+    "text": "Evaluate in the evaluation set\nUse them to predict in the evaluation set.\n\npredicted &lt;- evaluation |&gt;\n  mutate(\n    flat = predict(flat, newdata = evaluation),\n    linear = predict(linear, newdata = evaluation),\n    quadratic = predict(quadratic, newdata = evaluation)\n  )\n\nAggregate prediction errors in the evaluation set to produce mean squared error estimates for each model.\n\nperformance &lt;- predicted |&gt;\n  # Select the actual and predicted values\n  mutate(actual = log(income)) |&gt;\n  select(actual, flat, linear, quadratic) |&gt;\n  # Make a long dataset for ease of analysis\n  pivot_longer(cols = -actual, names_to = \"model_name\", values_to = \"prediction\") |&gt;\n  # Create a column with errors\n  mutate(squared_error = (actual - prediction) ^ 2) |&gt;\n  # Summarize mean squared error\n  group_by(model_name) |&gt;\n  summarize(mse = mean(squared_error)) |&gt;\n  print()\n\n# A tibble: 3 × 2\n  model_name   mse\n  &lt;chr&gt;      &lt;dbl&gt;\n1 flat       0.635\n2 linear     0.632\n3 quadratic  0.711\n\n\nOur split-sample procedure estimates that the linear model has the best performance!"
+  },
+  {
+    "objectID": "evaluate.html#difficulties-in-split-sample-model-evaluation",
+    "href": "evaluate.html#difficulties-in-split-sample-model-evaluation",
+    "title": "Evaluate Models",
+    "section": "Difficulties in split-sample model evaluation",
+    "text": "Difficulties in split-sample model evaluation\n\nthe estimated performance may itself be statistically uncertain\nif the best model in one subgroup is different from the best in another subgroup, then a sample-average MSE may not be optimal for selecting for our task"
+  },
+  {
+    "objectID": "simulate_a_sample.html",
+    "href": "simulate_a_sample.html",
+    "title": "Simulate Data",
+    "section": "",
+    "text": "This exercise works with simulated samples. Taking the nonparametric estimates from 5 million cases as the truth, you will generate a simulated sample of a much smaller size using the code below.\nIf you are a Stata user, see the bottom of this page for code. The page mainly supports coding in R.\nPrepare the environment by loading the tidyverse package.\nlibrary(tidyverse)\nThe function below simulates a sample of 100 cases.\nsimulate &lt;- function(n = 100) {\n  read_csv(\"https://ilundberg.github.io/description/assets/truth.csv\") |&gt;\n    slice_sample(n = n, weight_by = weight, replace = T) |&gt;\n    mutate(income = exp(rnorm(n(), meanlog, sdlog))) |&gt;\n    select(year, age, sex, income)\n}\nWe can see how it works below,\nsimulated &lt;- simulate(n = 100)\n\nRows: 420 Columns: 6\n── Column specification ────────────────────────────────────────────────────────\nDelimiter: \",\"\nchr (1): sex\ndbl (5): year, age, meanlog, sdlog, weight\n\nℹ Use `spec()` to retrieve the full column specification for this data.\nℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.\nand can print a bit of the output.\nsimulated |&gt; print(n = 3)\n\n# A tibble: 100 × 4\n   year   age sex    income\n  &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;   &lt;dbl&gt;\n1  2014    36 male  110880.\n2  2019    38 male   13369.\n3  2010    39 male   16418.\n# ℹ 97 more rows"
+  },
+  {
+    "objectID": "simulate_a_sample.html#code-for-stata-users",
+    "href": "simulate_a_sample.html#code-for-stata-users",
+    "title": "Simulate Data",
+    "section": "Code for Stata users",
+    "text": "Code for Stata users\nI am mostly not a Stata user, and this is provided for secondary pedadogical purposes in case some people do not use R. If you are a Stata user, feel free to let me know how to improve this code.\n\nset seed 90095\n\n* Load true population data\n\nimport delimited https://ilundberg.github.io/description/assets/truth.csv\n\n* Draw a sample of 100 X-values\n* Need two supporting packages\n*ssc install moremata\n*ssc install gsample\n\n* Draw the sample\ngsample 100 [w = weight]\n\n* Simulate individual income data\ngen log_income = meanlog + sdlog * rnormal()\ngen income = exp(log_income)\n\n* Keep variables to work with\n\nencode sex, gen(factorsex)\nkeep year age factorsex log_income income\nrename factorsex sex"
+  },
+  {
+    "objectID": "machine_learning.html",
+    "href": "machine_learning.html",
+    "title": "Machine Learning",
+    "section": "",
+    "text": "Under a worldview in which descriptive models exist to produce \\(\\hat{Y}\\) instead of \\(\\hat\\beta\\), machine learning (ML) becomes an easy plug-in replacement for classical statistics. We only need \\(\\hat{Y}\\), and machine learning estimators might produce good \\(\\hat{Y}\\) values.\nWe illustrate by the example from Define Models and Evaluate Models. Below, we apply several machine learning estimators to the task of modeling geometric mean income for male and female respondents at age 30.\nTo run the code on this page, you will need the tidyverse package.\nlibrary(tidyverse)\nWe will also set the seed so that it is possible to exactly reproduce these results.\nset.seed(90095)"
+  },
+  {
+    "objectID": "machine_learning.html#prepare-data",
+    "href": "machine_learning.html#prepare-data",
+    "title": "Machine Learning",
+    "section": "Prepare data",
+    "text": "Prepare data\nWe first load the simulate function (see Simulate a Sample) to create a sample of 1,000 observations. We make the sample larger because many ML models will perform better at larger sample sizes.\n\nsimulated &lt;- simulate(n = 1000)\n\n\n\n# A tibble: 1,000 × 4\n   year   age sex     income\n  &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;    &lt;dbl&gt;\n1  2011    48 female 351418.\n2  2012    38 female  28066.\n3  2013    38 female 133671.\n# ℹ 997 more rows\n\n\nWe then define the cases at which we want to make predictions.\n\nto_predict &lt;- tibble(\n  sex = c(\"female\",\"male\"),\n  age = c(30,30)\n)\n\n\n\n# A tibble: 2 × 2\n  sex      age\n  &lt;chr&gt;  &lt;dbl&gt;\n1 female    30\n2 male      30\n\n\nThe sections below show several statistical and machine learning estimators."
+  },
+  {
+    "objectID": "machine_learning.html#ols-review",
+    "href": "machine_learning.html#ols-review",
+    "title": "Machine Learning",
+    "section": "OLS review",
+    "text": "OLS review\nAs a brief review, recall that this procedure works with OLS. First, learn a model.\n\nfit &lt;- lm(log(income) ~ sex * age, data = simulated)\n\nThen make predictions.\n\nto_predict |&gt;\n  mutate(log_yhat = predict(fit, newdata = to_predict)) |&gt;\n  mutate(yhat = exp(log_yhat))\n\n# A tibble: 2 × 4\n  sex      age log_yhat   yhat\n  &lt;chr&gt;  &lt;dbl&gt;    &lt;dbl&gt;  &lt;dbl&gt;\n1 female    30     10.6 41119.\n2 male      30     10.8 47207.\n\n\nThe graph below visualizes this fit."
+  },
+  {
+    "objectID": "machine_learning.html#thin-plate-spline",
+    "href": "machine_learning.html#thin-plate-spline",
+    "title": "Machine Learning",
+    "section": "Thin-plate spline",
+    "text": "Thin-plate spline\nA thin-plate spline (see Wood 2017) estimates a smooth response to a continuous predictor. The mgcv package provides support for thin-plate splines and other smoothers.\n\nlibrary(mgcv)\n\nUsing the package, we can estimate a smooth response to the predictor age, separately by the factor variable sex.\n\nfit &lt;- gam(\n  log(income) ~ sex + s(age, by = sex),\n  # For GAM, the \"by\" variable must be a factor.\n  # Make it a factor in the data line here.\n  data = simulated |&gt; mutate(sex = factor(sex))\n)\n\nThen make predictions.\n\nto_predict |&gt;\n  mutate(log_yhat = predict(fit, newdata = to_predict)) |&gt;\n  mutate(yhat = exp(log_yhat))\n\n# A tibble: 2 × 4\n  sex      age  log_yhat      yhat\n  &lt;chr&gt;  &lt;dbl&gt; &lt;dbl[1d]&gt; &lt;dbl[1d]&gt;\n1 female    30      10.6    41119.\n2 male      30      10.7    45992.\n\n\nThe graph below visualizes this fit."
+  },
+  {
+    "objectID": "machine_learning.html#regression-tree",
+    "href": "machine_learning.html#regression-tree",
+    "title": "Machine Learning",
+    "section": "Regression tree",
+    "text": "Regression tree\nA regression tree recursively partitions the data by repeatedly splitting into subsets (“branches”) so that the terminal nodes (“leaves”) are subgroups in which the outcome is relatively homogeneous. The algorithm predicts the mean within the subgroup. While there are many versions of decision trees, the most common makes splits to maximize heterogeneity of the mean response across the nodes and minimize heterogeneity within the nodes.\nThe rpart package is one way to fit a regression trees,\n\nlibrary(rpart)\n\nwhich you can fit using a model formula as with OLS.\n\nfit &lt;- rpart(log(income) ~ sex + age, data = simulated)\n\nThen make predictions.\n\nto_predict |&gt;\n  mutate(log_yhat = predict(fit, newdata = to_predict)) |&gt;\n  mutate(yhat = exp(log_yhat))\n\n# A tibble: 2 × 4\n  sex      age log_yhat   yhat\n  &lt;chr&gt;  &lt;dbl&gt;    &lt;dbl&gt;  &lt;dbl&gt;\n1 female    30     10.7 43034.\n2 male      30     10.8 49341.\n\n\nThe graph below visualizes the fit that made these predictions."
+  },
+  {
+    "objectID": "machine_learning.html#random-forest",
+    "href": "machine_learning.html#random-forest",
+    "title": "Machine Learning",
+    "section": "Random forest",
+    "text": "Random forest\nA random forest repeatedly estimates regression trees on different subsamples of the data. This induces variation across the trees so that the average of the trees is an ensemble estimator with good properties.\nThe grf package (Athey, Tibshirani, and Wager 2019) is one tool to estimate a random forest, with automated parameter tuning and other functionality available for causal goals.\n\nlibrary(grf)\n\nTo use the regression_forest() function, one first converts the predictors to a model matrix and the outcome to a vector. You will also need a model matrix at which to make predictions.\n\nX &lt;- model.matrix(~ sex + age, data = simulated)\nY &lt;- log(simulated$income)\nX_to_predict &lt;- model.matrix(~ sex + age, data = to_predict)\n\nWith these prepared inputs, estimate the forest.\n\nfit &lt;- regression_forest(\n  X = X,\n  Y = Y,\n  tune.parameters = \"all\"\n)\n\nThen make predictions.\n\nto_predict |&gt;\n  mutate(log_yhat = predict(fit, newdata = X_to_predict)$predictions) |&gt;\n  mutate(yhat = exp(log_yhat))\n\n# A tibble: 2 × 4\n  sex      age log_yhat   yhat\n  &lt;chr&gt;  &lt;dbl&gt;    &lt;dbl&gt;  &lt;dbl&gt;\n1 female    30     10.7 42947.\n2 male      30     10.8 48049.\n\n\nThe graph below visualizes this fit."
+  },
+  {
+    "objectID": "machine_learning.html#closing-thoughts",
+    "href": "machine_learning.html#closing-thoughts",
+    "title": "Machine Learning",
+    "section": "Closing thoughts",
+    "text": "Closing thoughts\nMany machine learning approaches become available to you when you follow a \\(\\hat{Y}\\) recipe for descriptive modeling.\n\nDefine the learning data (e.g., simulated)\nDefine the predictor values at which to predict (e.g., to_predict)\nMake predictions\n\nThis recipe works just as well even when models do not involve coefficients!"
+  },
+  {
+    "objectID": "machine_learning.html#code-for-stata-users",
+    "href": "machine_learning.html#code-for-stata-users",
+    "title": "Machine Learning",
+    "section": "Code for Stata users",
+    "text": "Code for Stata users\nThis code assumes you have already generated a sample as at the bottom of the Simulate a Sample page. The code below makes a prediction using OLS.\nNote: I am mostly not a Stata user, and this is provided for secondary pedadogical purposes in case some people do not use R. If you are a Stata user, feel free to let me know how to improve this code.\n\n* Estimate a linear model\nreg log_income sex age c.age#i.sex\n\n* Preserve current data and remove from memory\npreserve\nclear\n\n* Create new data to predict\ninput str6 sex float age\n\"female\" 30\n\"male\" 30\nend\nencode sex, gen(factorsex)\nkeep age factorsex\nrename factorsex sex\n\n* Make predictions\npredict log_yhat\ngen yhat = exp(log_yhat)\n\n* Print predicted values\nlist\n\n* Restore the original simulated data\nrestore"
   }
 ]

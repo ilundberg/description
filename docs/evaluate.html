@@ -168,6 +168,10 @@ window.Quarto = {
 <span class="menu-text">Evaluate Models</span></a>
   </li>  
   <li class="nav-item">
+    <a class="nav-link" href="./machine_learning.html"> 
+<span class="menu-text">Machine Learning</span></a>
+  </li>  
+  <li class="nav-item">
     <a class="nav-link" href="./challenge.html"> 
 <span class="menu-text">Challenge Exercise</span></a>
   </li>  
@@ -192,7 +196,7 @@ window.Quarto = {
   <li><a href="#estimator-functions" id="toc-estimator-functions" class="nav-link" data-scroll-target="#estimator-functions">Estimator functions</a></li>
   <li><a href="#apply-estimators-in-repeated-samples" id="toc-apply-estimators-in-repeated-samples" class="nav-link" data-scroll-target="#apply-estimators-in-repeated-samples">Apply estimators in repeated samples</a></li>
   <li><a href="#visualize-estimator-performance" id="toc-visualize-estimator-performance" class="nav-link" data-scroll-target="#visualize-estimator-performance">Visualize estimator performance</a></li>
-  <li><a href="#conclusions" id="toc-conclusions" class="nav-link" data-scroll-target="#conclusions">Conclusions</a></li>
+  <li><a href="#conclusions-many-samples-simulation" id="toc-conclusions-many-samples-simulation" class="nav-link" data-scroll-target="#conclusions-many-samples-simulation">Conclusions: Many-samples simulation</a></li>
   </ul></li>
   <li><a href="#realistic-one-sample-from-the-population" id="toc-realistic-one-sample-from-the-population" class="nav-link" data-scroll-target="#realistic-one-sample-from-the-population">Realistic: One sample from the population</a>
   <ul class="collapse">
@@ -226,7 +230,15 @@ window.Quarto = {
 </header>
 
 
-<p>This page presents a <span class="math inline">\(\hat{Y}\)</span> view of what it means for one model to outperform another model. We first discuss in a simulated setting where we generate many samples from the population and directly observe performance of estimators across those simulated samples. Then, we discuss how one can evaluate performance in the more realistic setting in which only one sample from the population is available,</p>
+<p>This page presents a <span class="math inline">\(\hat{Y}\)</span> view of what it means for one model to outperform another model. We first discuss in a simulated setting where we generate many samples from the population and directly observe performance of estimators across those simulated samples. Then, we discuss how one can evaluate performance in the more realistic setting in which only one sample from the population is available.</p>
+<p>To run the code on this page, you will need the <code>tidyverse</code> package.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We will also set the seed so that it is possible to exactly reproduce these results.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">90095</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
 <section id="simulation-many-samples-from-the-population" class="level1">
 <h1>Simulation: Many samples from the population</h1>
 <ul>
@@ -239,59 +251,49 @@ window.Quarto = {
 <h2 class="anchored" data-anchor-id="estimator-functions">Estimator functions</h2>
 <p>The functions below is an estimator: it take data in and returns estimates. This function can be applied with the flat, linear, and quadratic models defiend on the previous page.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>estimator <span class="ot">&lt;-</span> <span class="cf">function</span>(</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    data, <span class="co"># from simulate()</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    model_name <span class="co"># one of "flat", "linear", "quadratic"</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>) {</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Estimate a regression model</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (model_name <span class="sc">==</span> <span class="st">"flat"</span>) {</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    fit <span class="ot">&lt;-</span> <span class="fu">lm</span>(<span class="fu">log</span>(income) <span class="sc">~</span> sex, <span class="at">data =</span> data)</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> <span class="cf">if</span> (model_name <span class="sc">==</span> <span class="st">"linear"</span>) {</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    fit <span class="ot">&lt;-</span> <span class="fu">lm</span>(<span class="fu">log</span>(income) <span class="sc">~</span> sex <span class="sc">*</span> age, <span class="at">data =</span> data)</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> <span class="cf">if</span> (model_name <span class="sc">==</span> <span class="st">"quadratic"</span>) {</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    fit <span class="ot">&lt;-</span> <span class="fu">lm</span>(<span class="fu">log</span>(income) <span class="sc">~</span> sex <span class="sc">*</span> <span class="fu">poly</span>(age,<span class="dv">2</span>), <span class="at">data =</span> data)</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Define x-values at which to make predictions</span></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  to_predict <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">sex =</span> <span class="fu">c</span>(<span class="st">"female"</span>,<span class="st">"male"</span>),</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">age =</span> <span class="fu">c</span>(<span class="dv">30</span>,<span class="dv">30</span>)</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Make predictions</span></span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>  predicted <span class="ot">&lt;-</span> to_predict <span class="sc">|&gt;</span></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">estimate =</span> <span class="fu">predict</span>(fit, <span class="at">newdata =</span> to_predict)) <span class="sc">|&gt;</span></span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Transform from log scale to dollars scale</span></span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">estimate =</span> <span class="fu">exp</span>(estimate)) <span class="sc">|&gt;</span></span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Append information for summarizing later</span></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>      <span class="at">model_name =</span> model_name,</span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>      <span class="at">sample_size =</span> <span class="fu">nrow</span>(data)</span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Return the predicted estimates</span></span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(predicted)</span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>estimator <span class="ot">&lt;-</span> <span class="cf">function</span>(</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    data, <span class="co"># from simulate()</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    model_name <span class="co"># one of "flat", "linear", "quadratic"</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>) {</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Estimate a regression model</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (model_name <span class="sc">==</span> <span class="st">"flat"</span>) {</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    fit <span class="ot">&lt;-</span> <span class="fu">lm</span>(<span class="fu">log</span>(income) <span class="sc">~</span> sex, <span class="at">data =</span> data)</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> <span class="cf">if</span> (model_name <span class="sc">==</span> <span class="st">"linear"</span>) {</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    fit <span class="ot">&lt;-</span> <span class="fu">lm</span>(<span class="fu">log</span>(income) <span class="sc">~</span> sex <span class="sc">*</span> age, <span class="at">data =</span> data)</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> <span class="cf">if</span> (model_name <span class="sc">==</span> <span class="st">"quadratic"</span>) {</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    fit <span class="ot">&lt;-</span> <span class="fu">lm</span>(<span class="fu">log</span>(income) <span class="sc">~</span> sex <span class="sc">*</span> <span class="fu">poly</span>(age,<span class="dv">2</span>), <span class="at">data =</span> data)</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Define x-values at which to make predictions</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>  to_predict <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">sex =</span> <span class="fu">c</span>(<span class="st">"female"</span>,<span class="st">"male"</span>),</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">age =</span> <span class="fu">c</span>(<span class="dv">30</span>,<span class="dv">30</span>)</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Make predictions</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>  predicted <span class="ot">&lt;-</span> to_predict <span class="sc">|&gt;</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">estimate =</span> <span class="fu">predict</span>(fit, <span class="at">newdata =</span> to_predict)) <span class="sc">|&gt;</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Transform from log scale to dollars scale</span></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">estimate =</span> <span class="fu">exp</span>(estimate)) <span class="sc">|&gt;</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Append information for summarizing later</span></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>      <span class="at">model_name =</span> model_name,</span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>      <span class="at">sample_size =</span> <span class="fu">nrow</span>(data)</span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Return the predicted estimates</span></span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(predicted)</span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>As an illustration, here is the linear estimator applied to a simulated sample</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>simulated <span class="ot">&lt;-</span> <span class="fu">simulate</span>(<span class="at">n =</span> <span class="dv">100</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Rows: 420 Columns: 6
-── Column specification ────────────────────────────────────────────────────────
-Delimiter: ","
-chr (1): sex
-dbl (5): year, age, meanlog, sdlog, weight
-
-ℹ Use `spec()` to retrieve the full column specification for this data.
-ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
-</div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>simulated <span class="ot">&lt;-</span> <span class="fu">simulate</span>(<span class="at">n =</span> <span class="dv">100</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">estimator</span>(<span class="at">data =</span> simulated, <span class="at">model_name =</span> <span class="st">"linear"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">estimator</span>(<span class="at">data =</span> simulated, <span class="at">model_name =</span> <span class="st">"linear"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 2 × 5
   sex      age estimate model_name sample_size
   &lt;chr&gt;  &lt;dbl&gt;    &lt;dbl&gt; &lt;chr&gt;            &lt;int&gt;
-1 female    30   35102. linear             100
-2 male      30   46860. linear             100</code></pre>
+1 female    30   38436. linear             100
+2 male      30   51877. linear             100</code></pre>
 </div>
 </div>
 </section>
@@ -300,31 +302,31 @@ dbl (5): year, age, meanlog, sdlog, weight
 <p>How do our estimators perform in repeated samples? In actual problems, one only has one sample. But we created this exercise so that we can use <code>simulate()</code> to simulate many samples from a known data generating process. The code below applies the estimator to many samples of size 100.</p>
 <p>We first prepare for parallel computing.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(foreach)</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(doParallel)</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(doRNG)</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>cl <span class="ot">&lt;-</span> <span class="fu">makeCluster</span>(<span class="fu">detectCores</span>())</span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="fu">registerDoParallel</span>(cl)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(foreach)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(doParallel)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(doRNG)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>cl <span class="ot">&lt;-</span> <span class="fu">makeCluster</span>(<span class="fu">detectCores</span>())</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="fu">registerDoParallel</span>(cl)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Then we apply the estimator many times at each of a series of sample sizes.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>simulations <span class="ot">&lt;-</span> <span class="fu">foreach</span>(</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">repetition =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">1000</span>, </span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">.combine =</span> <span class="st">"rbind"</span>, </span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">.packages =</span> <span class="st">"tidyverse"</span></span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>) <span class="sc">%dorng%</span> {</span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">foreach</span>(<span class="at">n_value =</span> <span class="fu">c</span>(<span class="dv">50</span>,<span class="dv">100</span>,<span class="dv">200</span>,<span class="dv">500</span>,<span class="dv">1000</span>), <span class="at">.combine =</span> <span class="st">"rbind"</span>) <span class="sc">%do%</span> {</span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Simulate data</span></span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    simulated <span class="ot">&lt;-</span> <span class="fu">simulate</span>(<span class="at">n =</span> n_value)</span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Apply the three estimators</span></span>
-<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>    flat <span class="ot">&lt;-</span> <span class="fu">estimator</span>(<span class="at">data =</span> simulated, <span class="at">model_name =</span> <span class="st">"flat"</span>)</span>
-<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>    linear <span class="ot">&lt;-</span> <span class="fu">estimator</span>(<span class="at">data =</span> simulated, <span class="at">model_name =</span> <span class="st">"linear"</span>)</span>
-<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>    quadratic <span class="ot">&lt;-</span> <span class="fu">estimator</span>(<span class="at">data =</span> simulated, <span class="at">model_name =</span> <span class="st">"quadratic"</span>)</span>
-<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Return estimates</span></span>
-<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>    all_estimates <span class="ot">&lt;-</span> <span class="fu">rbind</span>(flat, linear, quadratic)</span>
-<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(all_estimates)</span>
-<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>simulations <span class="ot">&lt;-</span> <span class="fu">foreach</span>(</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">repetition =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">1000</span>, </span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">.combine =</span> <span class="st">"rbind"</span>, </span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">.packages =</span> <span class="st">"tidyverse"</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>) <span class="sc">%dorng%</span> {</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">foreach</span>(<span class="at">n_value =</span> <span class="fu">c</span>(<span class="dv">50</span>,<span class="dv">100</span>,<span class="dv">200</span>,<span class="dv">500</span>,<span class="dv">1000</span>), <span class="at">.combine =</span> <span class="st">"rbind"</span>) <span class="sc">%do%</span> {</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Simulate data</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    simulated <span class="ot">&lt;-</span> <span class="fu">simulate</span>(<span class="at">n =</span> n_value)</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Apply the three estimators</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    flat <span class="ot">&lt;-</span> <span class="fu">estimator</span>(<span class="at">data =</span> simulated, <span class="at">model_name =</span> <span class="st">"flat"</span>)</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>    linear <span class="ot">&lt;-</span> <span class="fu">estimator</span>(<span class="at">data =</span> simulated, <span class="at">model_name =</span> <span class="st">"linear"</span>)</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>    quadratic <span class="ot">&lt;-</span> <span class="fu">estimator</span>(<span class="at">data =</span> simulated, <span class="at">model_name =</span> <span class="st">"quadratic"</span>)</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Return estimates</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>    all_estimates <span class="ot">&lt;-</span> <span class="fu">rbind</span>(flat, linear, quadratic)</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(all_estimates)</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="visualize-estimator-performance" class="level2">
@@ -334,7 +336,7 @@ dbl (5): year, age, meanlog, sdlog, weight
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="evaluate_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="evaluate_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
@@ -345,32 +347,61 @@ dbl (5): year, age, meanlog, sdlog, weight
 \hat\theta_r(\vec{x}) &amp;= \text{Estimated geometric mean in subgroup }\vec{x}\text{ in simulated sample }r \\
 \widehat{\text{MSE}}\bigg(\hat\theta(\vec{x})\bigg) &amp;= \frac{1}{R}\sum_{r=1}^R \left(\text{log}(\hat\theta) - \text{log}(\theta)\right)^2
 \end{aligned}\]</span></p>
-<p>The figure below reports MSE for each estimator at each sample size.</p>
+<p>To calculate the MSE, we need the true values from our simulation. The code below is somewhat opaque because it requires you to know something about how we generated the data. In this code, <code>meanlog</code> is the mean log income in each <code>sex</code> <span class="math inline">\(\times\)</span> <code>age</code> <span class="math inline">\(\times\)</span> <code>year</code> subgroup, estimated in the full ACS. The <code>weight</code> corresponds to the size of the subgroup; later years have greater weight because the total population was greater then, for example. We aggregate to truth within <code>sex</code> <span class="math inline">\(\times\)</span> <code>age</code> subgroups.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>truth <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"https://ilundberg.github.io/description/assets/truth.csv"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(sex, age) <span class="sc">|&gt;</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">truth =</span> <span class="fu">exp</span>(<span class="fu">weighted.mean</span>(meanlog, <span class="at">w =</span> weight)),</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">"drop"</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>The code below merges the truth with the simulated estimates and calculates aggregate performance metrics: bias, variance, and mean squared error.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>aggregate_performance <span class="ot">&lt;-</span> simulations <span class="sc">|&gt;</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Merge in the true values from the simulation</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(truth, <span class="at">by =</span> <span class="fu">join_by</span>(sex, age)) <span class="sc">|&gt;</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Convert to log scale</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">estimate =</span> <span class="fu">log</span>(estimate), </span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">truth =</span> <span class="fu">log</span>(truth)</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Calculate aggregate performance within</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># population subgroups (sex, age)</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>  <span class="co"># and simulation settings (model_name, sample_size)</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(sex, age, model_name, sample_size) <span class="sc">|&gt;</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">bias =</span> <span class="fu">mean</span>(estimate <span class="sc">-</span> truth),</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">variance =</span> <span class="fu">var</span>(estimate),</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">mse =</span> <span class="fu">mean</span>((estimate <span class="sc">-</span> truth) <span class="sc">^</span> <span class="dv">2</span>),</span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">"drop"</span></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>The graph below visualizes aggregate performance measured by mean squared error.</p>
 <div class="cell">
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="evaluate_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="evaluate_files/figure-html/unnamed-chunk-13-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
 </div>
 </section>
-<section id="conclusions" class="level2">
-<h2 class="anchored" data-anchor-id="conclusions">Conclusions</h2>
-<p>The results indicate that</p>
+<section id="conclusions-many-samples-simulation" class="level2">
+<h2 class="anchored" data-anchor-id="conclusions-many-samples-simulation">Conclusions: Many-samples simulation</h2>
+<p>The results show how the more complex models perform better than simpler models only at larger sample sizes.</p>
+<p>For the male subgroup,</p>
 <ul>
-<li>in a small sample (<span class="math inline">\(n = 50\)</span>), the flat model is best</li>
-<li>the linear model becomes best
+<li>a flat model is best at <span class="math inline">\(n = 50\)</span></li>
+<li>a linear model becomes best at <span class="math inline">\(n = 100\)</span></li>
+<li>a quadratic model becomes best at $n ={}$1,000</li>
+</ul>
+<p>For the female subgroup,</p>
 <ul>
-<li>at <span class="math inline">\(n = 100\)</span> for the male subgroup</li>
-<li>at <span class="math inline">\(n = 500\)</span> for the female subgroup</li>
-</ul></li>
-<li>the quadratic model becomes best
-<ul>
-<li>at <span class="math inline">\(n = 1,000\)</span> in the male subgroup</li>
-<li>at some higher sample size in the female subgroup</li>
-</ul></li>
+<li>a flat model is best at <span class="math inline">\(n = 50, 100, 200\)</span></li>
+<li>a linear model becomes best at <span class="math inline">\(n = 500\)</span></li>
+<li>a quadratic model may become best at an untested sample size greater than $n ={}$1,000</li>
 </ul>
 <p>There are two main conclusions from this illustration. Which estimator is best is a question that</p>
 <ul>
@@ -385,9 +416,9 @@ dbl (5): year, age, meanlog, sdlog, weight
 <p>In the real world, we cannot evaluate performance over many samples from the population. We typically have only one sample! This section is about evaluating performance when only one sample is available.</p>
 <p>The code below generates one sample.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>simulated <span class="ot">&lt;-</span> <span class="fu">simulate</span>(<span class="at">n =</span> <span class="dv">100</span>) <span class="sc">|&gt;</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># To track the units in this sample, we will add an id column</span></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">id =</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">n</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>simulated <span class="ot">&lt;-</span> <span class="fu">simulate</span>(<span class="at">n =</span> <span class="dv">100</span>) <span class="sc">|&gt;</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># To track the units in this sample, we will add an id column</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">id =</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">n</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>One way to evaluate in one sample is to use a split-sample procedure:</p>
 <ol type="1">
@@ -400,56 +431,56 @@ dbl (5): year, age, meanlog, sdlog, weight
 <h2 class="anchored" data-anchor-id="split-into-learning-and-evaluation-sets">Split into learning and evaluation sets</h2>
 <p>Create a learning set with half of the cases.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>learning <span class="ot">&lt;-</span> simulated <span class="sc">|&gt;</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice_sample</span>(<span class="at">prop =</span> .<span class="dv">5</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>learning <span class="ot">&lt;-</span> simulated <span class="sc">|&gt;</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice_sample</span>(<span class="at">prop =</span> .<span class="dv">5</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Create an evaluation set with the other half.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>evaluation <span class="ot">&lt;-</span> simulated <span class="sc">|&gt;</span></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">anti_join</span>(learning, <span class="at">by =</span> <span class="fu">join_by</span>(id))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>evaluation <span class="ot">&lt;-</span> simulated <span class="sc">|&gt;</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">anti_join</span>(learning, <span class="at">by =</span> <span class="fu">join_by</span>(id))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="estimate-models-in-the-learning-set" class="level2">
 <h2 class="anchored" data-anchor-id="estimate-models-in-the-learning-set">Estimate models in the learning set</h2>
 <p>Next, estimate the models in the learning set.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>flat <span class="ot">&lt;-</span> <span class="fu">lm</span>(<span class="fu">log</span>(income) <span class="sc">~</span> sex, <span class="at">data =</span> learning)</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>linear <span class="ot">&lt;-</span> <span class="fu">lm</span>(<span class="fu">log</span>(income) <span class="sc">~</span> sex <span class="sc">*</span> age, <span class="at">data =</span> learning)</span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>quadratic <span class="ot">&lt;-</span> <span class="fu">lm</span>(<span class="fu">log</span>(income) <span class="sc">~</span> sex <span class="sc">*</span> <span class="fu">poly</span>(age,<span class="dv">2</span>), <span class="at">data =</span> learning)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>flat <span class="ot">&lt;-</span> <span class="fu">lm</span>(<span class="fu">log</span>(income) <span class="sc">~</span> sex, <span class="at">data =</span> learning)</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>linear <span class="ot">&lt;-</span> <span class="fu">lm</span>(<span class="fu">log</span>(income) <span class="sc">~</span> sex <span class="sc">*</span> age, <span class="at">data =</span> learning)</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>quadratic <span class="ot">&lt;-</span> <span class="fu">lm</span>(<span class="fu">log</span>(income) <span class="sc">~</span> sex <span class="sc">*</span> <span class="fu">poly</span>(age,<span class="dv">2</span>), <span class="at">data =</span> learning)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="evaluate-in-the-evaluation-set" class="level2">
 <h2 class="anchored" data-anchor-id="evaluate-in-the-evaluation-set">Evaluate in the evaluation set</h2>
 <p>Use them to predict in the evaluation set.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>predicted <span class="ot">&lt;-</span> evaluation <span class="sc">|&gt;</span></span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">flat =</span> <span class="fu">predict</span>(flat, <span class="at">newdata =</span> evaluation),</span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">linear =</span> <span class="fu">predict</span>(linear, <span class="at">newdata =</span> evaluation),</span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">quadratic =</span> <span class="fu">predict</span>(quadratic, <span class="at">newdata =</span> evaluation)</span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>predicted <span class="ot">&lt;-</span> evaluation <span class="sc">|&gt;</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">flat =</span> <span class="fu">predict</span>(flat, <span class="at">newdata =</span> evaluation),</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">linear =</span> <span class="fu">predict</span>(linear, <span class="at">newdata =</span> evaluation),</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">quadratic =</span> <span class="fu">predict</span>(quadratic, <span class="at">newdata =</span> evaluation)</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Aggregate prediction errors in the evaluation set to produce mean squared error estimates for each model.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>performance <span class="ot">&lt;-</span> predicted <span class="sc">|&gt;</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Select the actual and predicted values</span></span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">actual =</span> <span class="fu">log</span>(income)) <span class="sc">|&gt;</span></span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(actual, flat, linear, quadratic) <span class="sc">|&gt;</span></span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Make a long dataset for ease of analysis</span></span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">cols =</span> <span class="sc">-</span>actual, <span class="at">names_to =</span> <span class="st">"model_name"</span>, <span class="at">values_to =</span> <span class="st">"prediction"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Create a column with errors</span></span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">squared_error =</span> (actual <span class="sc">-</span> prediction) <span class="sc">^</span> <span class="dv">2</span>) <span class="sc">|&gt;</span></span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Summarize mean squared error</span></span>
-<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(model_name) <span class="sc">|&gt;</span></span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">mse =</span> <span class="fu">mean</span>(squared_error)) <span class="sc">|&gt;</span></span>
-<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>performance <span class="ot">&lt;-</span> predicted <span class="sc">|&gt;</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Select the actual and predicted values</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">actual =</span> <span class="fu">log</span>(income)) <span class="sc">|&gt;</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(actual, flat, linear, quadratic) <span class="sc">|&gt;</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Make a long dataset for ease of analysis</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">cols =</span> <span class="sc">-</span>actual, <span class="at">names_to =</span> <span class="st">"model_name"</span>, <span class="at">values_to =</span> <span class="st">"prediction"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Create a column with errors</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">squared_error =</span> (actual <span class="sc">-</span> prediction) <span class="sc">^</span> <span class="dv">2</span>) <span class="sc">|&gt;</span></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Summarize mean squared error</span></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(model_name) <span class="sc">|&gt;</span></span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">mse =</span> <span class="fu">mean</span>(squared_error)) <span class="sc">|&gt;</span></span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 3 × 2
   model_name   mse
   &lt;chr&gt;      &lt;dbl&gt;
-1 flat       0.619
-2 linear     0.618
-3 quadratic  0.655</code></pre>
+1 flat       0.635
+2 linear     0.632
+3 quadratic  0.711</code></pre>
 </div>
 </div>
 <p>Our split-sample procedure estimates that the linear model has the best performance!</p>

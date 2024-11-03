@@ -1,0 +1,324 @@
+---
+title: "Machine Learning"
+---
+
+Under a worldview in which descriptive models exist to produce $\hat{Y}$ instead of $\hat\beta$, machine learning (ML) becomes an easy plug-in replacement for classical statistics. We only need $\hat{Y}$, and machine learning estimators might produce good $\hat{Y}$ values.
+
+We illustrate by the example from [Define Models](define_models) and [Evaluate Models](evaluate). Below, we apply several machine learning estimators to the task of modeling geometric mean income for male and female respondents at age 30.
+
+To run the code on this page, you will need the `tidyverse` package.
+
+```{r, message = F, warning = F, results = "hide"}
+library(tidyverse)
+```
+
+We will also set the seed so that it is possible to exactly reproduce these results.
+
+```{r}
+set.seed(90095)
+```
+
+## Prepare data
+
+We first load the simulate function (see [Simulate a Sample](simulate_a_sample)) to create a sample of 1,000 observations. We make the sample larger because many ML models will perform better at larger sample sizes.
+
+```{r, echo = F}
+simulate <- function(n = 100) {
+  read_csv("assets/truth.csv") |>
+    slice_sample(n = n, weight_by = weight, replace = T) |>
+    mutate(income = exp(rnorm(n(), meanlog, sdlog))) |>
+    select(year, age, sex, income)
+}
+```
+
+```{r, results = 'hide', message = F, warning = F, comment = F}
+simulated <- simulate(n = 1000)
+```
+```{r, echo = F}
+simulated |> print(n = 3)
+```
+
+We then define the cases at which we want to make predictions.
+
+```{r}
+to_predict <- tibble(
+  sex = c("female","male"),
+  age = c(30,30)
+)
+```
+```{r, echo = F}
+to_predict |> print()
+```
+
+The sections below show several statistical and machine learning estimators.
+
+## OLS review
+
+As a brief review, recall that this procedure works with OLS. First, learn a model.
+
+```{r}
+fit <- lm(log(income) ~ sex * age, data = simulated)
+```
+
+Then make predictions.
+
+```{r}
+to_predict |>
+  mutate(log_yhat = predict(fit, newdata = to_predict)) |>
+  mutate(yhat = exp(log_yhat))
+```
+
+The graph below visualizes this fit.
+```{r, echo = F}
+graph_predict <- tibble(
+  age = rep(30:50, each = 2), 
+  sex = rep(c("female","male"), 21)
+)
+nonparametric <- simulated |> 
+  group_by(sex, age) |> 
+  summarize(yhat = exp(mean(log(income))), .groups = "drop")
+graph_predict |>
+  mutate(
+    log_yhat = predict(fit, newdata = graph_predict),
+    yhat = exp(log_yhat)
+  ) |>
+  mutate(sex = fct_rev(sex)) |>
+  ggplot(aes(x = age, y = yhat, color = sex)) +
+  geom_line() +
+  geom_point(data = nonparametric, alpha = .6) +
+  scale_color_discrete(
+    name = "Sex",
+    labels = stringr::str_to_title
+  ) +
+  ggtitle(
+    "Ordinary Least Squares",
+    subtitle = "Points are nonparametric estimates"      
+  ) +
+  xlab("Age") +
+  scale_y_continuous(
+    name = "Geometric Mean Income\n(Log Scale)",
+    labels = scales::label_dollar(accuracy = 1),
+    trans = "log"
+  ) +
+  theme_classic()
+```
+
+
+
+## Thin-plate spline
+
+A thin-plate spline (see [Wood 2017](https://www.taylorfrancis.com/books/mono/10.1201/9781315370279/generalized-additive-models-simon-wood)) estimates a smooth response to a continuous predictor. The `mgcv` package provides support for thin-plate splines and other smoothers.
+
+```{r, comment = F, message = F, results = "hide"}
+library(mgcv)
+```
+
+Using the package, we can estimate a smooth response to the predictor `age`, separately by the factor variable `sex`.
+
+```{r}
+fit <- gam(
+  log(income) ~ sex + s(age, by = sex),
+  # For GAM, the "by" variable must be a factor.
+  # Make it a factor in the data line here.
+  data = simulated |> mutate(sex = factor(sex))
+)
+```
+
+Then make predictions.
+
+```{r}
+to_predict |>
+  mutate(log_yhat = predict(fit, newdata = to_predict)) |>
+  mutate(yhat = exp(log_yhat))
+```
+
+The graph below visualizes this fit.
+```{r, echo = F}
+graph_predict |>
+  mutate(
+    log_yhat = predict(fit, newdata = graph_predict),
+    yhat = exp(log_yhat)
+  ) |>
+  ggplot(aes(x = age, y = yhat, color = sex)) +
+  geom_point(data = nonparametric, alpha = .6) +
+  geom_line() +
+  scale_color_discrete(
+    name = "Sex",
+    labels = stringr::str_to_title
+  ) +
+  ggtitle(
+    "Thin-plate splines",
+    subtitle = "Points are nonparametric estimates"      
+  ) +
+  xlab("Age") +
+  scale_y_continuous(
+    name = "Geometric Mean Income\n(Log Scale)",
+    labels = scales::label_dollar(accuracy = 1),
+    trans = "log"
+  ) +
+  theme_classic()
+```
+
+## Regression tree
+
+A regression tree recursively partitions the data by repeatedly splitting into subsets ("branches") so that the terminal nodes ("leaves") are subgroups in which the outcome is relatively homogeneous. The algorithm predicts the mean within the subgroup. While there are many versions of decision trees, the most common makes splits to maximize heterogeneity of the mean response across the nodes and minimize heterogeneity within the nodes.
+
+The `rpart` package is one way to fit a regression trees,
+
+```{r, comment = F, message = F, results = "hide"}
+library(rpart)
+```
+
+which you can fit using a model formula as with OLS.
+
+```{r}
+fit <- rpart(log(income) ~ sex + age, data = simulated)
+```
+
+Then make predictions.
+
+```{r}
+to_predict |>
+  mutate(log_yhat = predict(fit, newdata = to_predict)) |>
+  mutate(yhat = exp(log_yhat))
+```
+
+The graph below visualizes the fit that made these predictions.
+
+```{r, echo = F}
+graph_predict |>
+  mutate(
+    log_yhat = predict(fit, newdata = graph_predict),
+    yhat = exp(log_yhat)
+  ) |>
+  ggplot(aes(x = age, y = yhat, color = sex)) +
+  geom_point(data = nonparametric, alpha = .6) +
+  geom_step() +
+  scale_color_discrete(
+    name = "Sex",
+    labels = stringr::str_to_title
+  ) +
+  ggtitle(
+    "Regression tree",
+    subtitle = "Points are nonparametric estimates"      
+  ) +
+  xlab("Age") +
+  scale_y_continuous(
+    name = "Geometric Mean Income\n(Log Scale)",
+    labels = scales::label_dollar(accuracy = 1),
+    trans = "log"
+  ) +
+  theme_classic()
+```
+
+## Random forest
+
+A random forest repeatedly estimates regression trees on different subsamples of the data. This induces variation across the trees so that the average of the trees is an ensemble estimator with good properties.
+
+The [`grf`](https://grf-labs.github.io/grf/) package [(Athey, Tibshirani, and Wager 2019)](https://projecteuclid.org/journals/annals-of-statistics/volume-47/issue-2/Generalized-random-forests/10.1214/18-AOS1709.full) is one tool to estimate a random forest, with automated parameter tuning and other functionality available for causal goals.
+
+```{r, comment = F, message = F, results = "hide"}
+library(grf)
+```
+
+To use the `regression_forest()` function, one first converts the predictors to a model matrix and the outcome to a vector. You will also need a model matrix at which to make predictions.
+
+```{r}
+X <- model.matrix(~ sex + age, data = simulated)
+Y <- log(simulated$income)
+X_to_predict <- model.matrix(~ sex + age, data = to_predict)
+```
+
+With these prepared inputs, estimate the forest.
+
+```{r}
+fit <- regression_forest(
+  X = X,
+  Y = Y,
+  tune.parameters = "all"
+)
+```
+
+Then make predictions.
+
+```{r}
+to_predict |>
+  mutate(log_yhat = predict(fit, newdata = X_to_predict)$predictions) |>
+  mutate(yhat = exp(log_yhat))
+```
+
+The graph below visualizes this fit.
+```{r, echo = F}
+graph_predict_X <- model.matrix(~ sex + age, data = graph_predict)
+graph_predict |>
+  mutate(
+    log_yhat = predict(fit, newdata = graph_predict_X)$predictions,
+    yhat = exp(log_yhat)
+  ) |>
+  ggplot(aes(x = age, y = yhat, color = sex)) +
+  geom_point(data = nonparametric) +
+  geom_step() +
+  scale_color_discrete(
+    name = "Sex",
+    labels = stringr::str_to_title
+  ) +
+  geom_point(data = nonparametric) +
+  ggtitle(
+    "Random forest",
+    subtitle = "Points are nonparametric estimates"      
+  ) +
+  xlab("Age") +
+  scale_y_continuous(
+    name = "Geometric Mean Income\n(Log Scale)",
+    labels = scales::label_dollar(accuracy = 1),
+    trans = "log"
+  ) +
+  theme_classic()
+```
+
+## Closing thoughts
+
+Many machine learning approaches become available to you when you follow a $\hat{Y}$ recipe for descriptive modeling.
+
+1. Define the learning data (e.g., `simulated`)
+2. Define the predictor values at which to predict (e.g., `to_predict`)
+3. Make predictions
+
+This recipe works just as well even when models do not involve coefficients!
+
+
+## Code for Stata users
+
+This code assumes you have already generated a sample as at the bottom of the [Simulate a Sample](simulate_a_sample) page. The code below makes a prediction using OLS.
+
+Note: I am mostly not a Stata user, and this is provided for secondary pedadogical purposes in case some people do not use R. If you are a Stata user, feel free to let me know how to improve this code.
+
+```{r, eval = F}
+* Estimate a linear model
+reg log_income sex age c.age#i.sex
+
+* Preserve current data and remove from memory
+preserve
+clear
+
+* Create new data to predict
+input str6 sex float age
+"female" 30
+"male" 30
+end
+encode sex, gen(factorsex)
+keep age factorsex
+rename factorsex sex
+
+* Make predictions
+predict log_yhat
+gen yhat = exp(log_yhat)
+
+* Print predicted values
+list
+
+* Restore the original simulated data
+restore
+```
+
+

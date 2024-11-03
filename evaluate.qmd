@@ -2,7 +2,19 @@
 title: "Evaluate Models"
 ---
 
-This page presents a $\hat{Y}$ view of what it means for one model to outperform another model. We first discuss in a simulated setting where we generate many samples from the population and directly observe performance of estimators across those simulated samples. Then, we discuss how one can evaluate performance in the more realistic setting in which only one sample from the population is available,
+This page presents a $\hat{Y}$ view of what it means for one model to outperform another model. We first discuss in a simulated setting where we generate many samples from the population and directly observe performance of estimators across those simulated samples. Then, we discuss how one can evaluate performance in the more realistic setting in which only one sample from the population is available.
+
+To run the code on this page, you will need the `tidyverse` package.
+
+```{r, message = F, warning = F, results = "hide"}
+library(tidyverse)
+```
+
+We will also set the seed so that it is possible to exactly reproduce these results.
+
+```{r}
+set.seed(90095)
+```
 
 # Simulation: Many samples from the population
 
@@ -13,7 +25,6 @@ This page presents a $\hat{Y}$ view of what it means for one model to outperform
 See the previous page for code to simulate a sample.
 
 ```{r, echo = F, message = F, warning = F}
-library(tidyverse)
 simulate <- function(n = 100) {
   read_csv("assets/truth.csv") |>
     slice_sample(n = n, weight_by = weight, replace = T) |>
@@ -60,7 +71,7 @@ estimator <- function(
 ```
 
 As an illustration, here is the linear estimator applied to a simulated sample
-```{r, results = "hide"}
+```{r, results = "hide", comment = F, warning = F, message = F}
 simulated <- simulate(n = 100)
 ```
 ```{r}
@@ -108,17 +119,19 @@ For simplicity, we first focus on one estimand and sample size: modeling the geo
 
 ```{r, echo = F, comment = F, message = F, warning = F}
 truth <- read_csv("assets/truth.csv") |>
-  filter(year == 2010 & age %in% c(30,45)) |>
-  mutate(truth = exp(meanlog)) |>
-  select(sex, age, truth)
+  group_by(sex, age) |>
+  summarize(
+    truth = exp(weighted.mean(meanlog, w = weight)),
+    .groups = "drop"
+  )
 ```
 
-```{r, echo = F, warning = F}
-simulations |>
+```{r, echo = F, warning = F, comment = F, message = F}
+p <- simulations |>
   filter(sex == "female" & age == 30 & sample_size == 100) |>
   left_join(truth, by = join_by(sex,age)) |>
-  ggplot(aes(x = estimate)) +
-  geom_histogram(alpha = .4, bins = 30) +
+  ggplot(aes(x = estimate, alpha = model_name)) +
+  geom_histogram(bins = 30) +
   geom_vline(aes(xintercept = truth)) +
   facet_grid(
     model_name ~ .,
@@ -144,7 +157,31 @@ simulations |>
   ggtitle(
     "Estimator Performance: Histogram Over Simulations", 
     subtitle = "Estimand: Geometric mean income among 30-year-old female subgroup"
-  )
+  ) +
+  theme(legend.position = "none")
+
+p + scale_alpha_manual(values = c(.4,.4,.4))
+
+ggsave(
+  "slides/histogram_0.pdf", 
+  plot = p + scale_alpha_manual(values = c(0,0,0)),
+  height = 4.5, width = 5.5
+)
+ggsave(
+  "slides/histogram_1.pdf", 
+  plot = p + scale_alpha_manual(values = c(.4,0,0)),
+  height = 4.5, width = 5.5
+)
+ggsave(
+  "slides/histogram_2.pdf", 
+  plot = p + scale_alpha_manual(values = c(.4,.4,0)),
+  height = 4.5, width = 5.5
+)
+ggsave(
+  "slides/histogram_3.pdf", 
+  plot = p + scale_alpha_manual(values = c(.4,.4,.4)),
+  height = 4.5, width = 5.5
+)
 ```
 
 To aggregate simulations to a summary score, we use mean squared error (MSE) on the scale of log incomes.
@@ -155,24 +192,45 @@ $$\begin{aligned}
 \widehat{\text{MSE}}\bigg(\hat\theta(\vec{x})\bigg) &= \frac{1}{R}\sum_{r=1}^R \left(\text{log}(\hat\theta) - \text{log}(\theta)\right)^2
 \end{aligned}$$
 
-The figure below reports MSE for each estimator at each sample size.
+To calculate the MSE, we need the true values from our simulation. The code below is somewhat opaque because it requires you to know something about how we generated the data. In this code, `meanlog` is the mean log income in each `sex` $\times$ `age` $\times$ `year` subgroup, estimated in the full ACS. The `weight` corresponds to the size of the subgroup; later years have greater weight because the total population was greater then, for example. We aggregate to truth within `sex` $\times$ `age` subgroups.
 
-```{r, echo = F}
-# Plot MSE
-simulations |>
+```{r, eval = F}
+truth <- read_csv("https://ilundberg.github.io/description/assets/truth.csv") |>
+  group_by(sex, age) |>
+  summarize(
+    truth = exp(weighted.mean(meanlog, w = weight)),
+    .groups = "drop"
+  )
+```
+
+The code below merges the truth with the simulated estimates and calculates aggregate performance metrics: bias, variance, and mean squared error.
+
+```{r}
+aggregate_performance <- simulations |>
+  # Merge in the true values from the simulation
   left_join(truth, by = join_by(sex, age)) |>
+  # Convert to log scale
   mutate(
     estimate = log(estimate), 
     truth = log(truth)
   ) |>
-  group_by(sex, model_name, sample_size) |>
+  # Calculate aggregate performance within
+  # population subgroups (sex, age)
+  # and simulation settings (model_name, sample_size)
+  group_by(sex, age, model_name, sample_size) |>
   summarize(
     bias = mean(estimate - truth),
     variance = var(estimate),
     mse = mean((estimate - truth) ^ 2),
     .groups = "drop"
-  ) |>
-  ggplot(aes(x = sample_size, y = mse, color = model_name)) +
+  )
+```
+
+The graph below visualizes aggregate performance measured by mean squared error.
+
+```{r, echo = F}
+p <- aggregate_performance |>
+  ggplot(aes(x = sample_size, y = mse, color = model_name, alpha = model_name)) +
   geom_point() +
   geom_line() +
   scale_y_continuous(
@@ -198,23 +256,99 @@ simulations |>
       )
     }
   ) +
+  scale_alpha_manual(
+    values = c(1,1,1),
+    name = "Estimator",
+    labels = function(x) {
+      case_when(
+        x == "flat" ~ "Flat Model",
+        x == "linear" ~ "Linear Model",
+        x == "quadratic" ~ "Quadratic Model"
+      )
+    }
+  ) +
   ggtitle(
     label = "Best Estimator Depends on Estimand and Sample Size",
     subtitle = "Estimand: Geometric mean income among U.S. adults age 30"
   )
+p
 ```
 
-## Conclusions
+```{r, echo = F, results = "hide", message = F, warning = F, comment = F}
+# For slides
+p0 <- p +
+  scale_alpha_manual(
+    values = c(0,0,0),
+    name = "Estimator",
+    labels = function(x) {
+      case_when(
+        x == "flat" ~ "Flat Model",
+        x == "linear" ~ "Linear Model",
+        x == "quadratic" ~ "Quadratic Model"
+      )
+    }
+  )
+p1 <- p +
+  scale_alpha_manual(
+    values = c(1,0,0),
+    name = "Estimator",
+    labels = function(x) {
+      case_when(
+        x == "flat" ~ "Flat Model",
+        x == "linear" ~ "Linear Model",
+        x == "quadratic" ~ "Quadratic Model"
+      )
+    }
+  )
+p2 <- p +
+  scale_alpha_manual(
+    values = c(1,1,0),
+    name = "Estimator",
+    labels = function(x) {
+      case_when(
+        x == "flat" ~ "Flat Model",
+        x == "linear" ~ "Linear Model",
+        x == "quadratic" ~ "Quadratic Model"
+      )
+    }
+  )
+ggsave(
+  filename = "slides/mse_0.pdf",
+  plot = p0,
+  height = 4, width = 6
+)
+ggsave(
+  filename = "slides/mse_1.pdf",
+  plot = p1,
+  height = 4, width = 6
+)
+ggsave(
+  filename = "slides/mse_2.pdf",
+  plot = p2,
+  height = 4, width = 6
+)
+ggsave(
+  filename = "slides/mse_3.pdf",
+  plot = p,
+  height = 4, width = 6
+)
+```
 
-The results indicate that
+## Conclusions: Many-samples simulation
 
-* in a small sample ($n = 50$), the flat model is best
-* the linear model becomes best
-     * at $n = 100$ for the male subgroup
-     * at $n = 500$ for the female subgroup
-* the quadratic model becomes best
-     * at $n = 1,000$ in the male subgroup
-     * at some higher sample size in the female subgroup
+The results show how the more complex models perform better than simpler models only at larger sample sizes.
+
+For the male subgroup,
+
+* a flat model is best at $n = 50$
+* a linear model becomes best at $n = 100$
+* a quadratic model becomes best at $n ={}$1,000
+
+For the female subgroup,
+
+* a flat model is best at $n = 50, 100, 200$
+* a linear model becomes best at $n = 500$
+* a quadratic model may become best at an untested sample size greater than $n ={}$1,000
 
 There are two main conclusions from this illustration. Which estimator is best is a question that
 
@@ -230,7 +364,6 @@ In the real world, we cannot evaluate performance over many samples from the pop
 The code below generates one sample.
 
 ```{r, echo = F, message = F, warning = F}
-library(tidyverse)
 simulate <- function(n = 100) {
   read_csv("assets/truth.csv") |>
     slice_sample(n = n, weight_by = weight, replace = T) |>
