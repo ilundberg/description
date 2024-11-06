@@ -9,7 +9,7 @@ This exercise uses models to describe where we have **no data at all**.
 
 Generate data as on the [Simulate Data](simulate_a_sample) page. You can set the sample size however large you want. You can use any model you want.
 
-Report your prediction in this [Google Form](https://forms.gle/UnfUmcLsrBZfLgNn9).
+Report your prediction in this [Google Form](https://docs.google.com/forms/d/e/1FAIpQLSfCwF1pGf3hBDmi9AvQywh94-fz33zJE4YpVUAsxkv4ENavEQ/viewform?usp=sf_link).
 
 ## Things you might discuss
 

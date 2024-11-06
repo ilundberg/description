@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2023.10.20)  3 NOV 2024 21:01
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2023.10.20)  4 NOV 2024 22:27
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -1874,7 +1874,7 @@ Overfull \hbox (7.29922pt too wide) in paragraph at lines 808--808
 ] [63
 
 ]
-<true_age_pattern.pdf, id=390, 361.35pt x 216.81pt>
+<true_age_pattern.pdf, id=392, 361.35pt x 216.81pt>
 File: true_age_pattern.pdf Graphic file (type pdf)
 <use true_age_pattern.pdf>
 Package pdftex.def Info: true_age_pattern.pdf  used on input line 829.
@@ -1887,7 +1887,7 @@ Overfull \hbox (6.72922pt too wide) in paragraph at lines 829--829
 [64
 
  <./true_age_pattern.pdf>]
-<define_models.pdf, id=401, 505.89pt x 216.81pt>
+<define_models.pdf, id=404, 505.89pt x 216.81pt>
 File: define_models.pdf Graphic file (type pdf)
 <use define_models.pdf>
 Package pdftex.def Info: define_models.pdf  used on input line 833.
@@ -1902,7 +1902,7 @@ Package pdftex.def Info: define_models.pdf  used on input line 837.
  [66
 
 ]
-<histogram_0.pdf, id=417, 397.485pt x 325.215pt>
+<histogram_0.pdf, id=423, 397.485pt x 325.215pt>
 File: histogram_0.pdf Graphic file (type pdf)
 <use histogram_0.pdf>
 Package pdftex.def Info: histogram_0.pdf  used on input line 844.
@@ -1910,7 +1910,7 @@ Package pdftex.def Info: histogram_0.pdf  used on input line 844.
  [67
 
  <./histogram_0.pdf>]
-<histogram_1.pdf, id=430, 397.485pt x 325.215pt>
+<histogram_1.pdf, id=436, 397.485pt x 325.215pt>
 File: histogram_1.pdf Graphic file (type pdf)
 <use histogram_1.pdf>
 Package pdftex.def Info: histogram_1.pdf  used on input line 844.
@@ -1918,7 +1918,7 @@ Package pdftex.def Info: histogram_1.pdf  used on input line 844.
  [68
 
  <./histogram_1.pdf>]
-<histogram_2.pdf, id=444, 397.485pt x 325.215pt>
+<histogram_2.pdf, id=451, 397.485pt x 325.215pt>
 File: histogram_2.pdf Graphic file (type pdf)
 <use histogram_2.pdf>
 Package pdftex.def Info: histogram_2.pdf  used on input line 844.
@@ -1926,7 +1926,7 @@ Package pdftex.def Info: histogram_2.pdf  used on input line 844.
  [69
 
  <./histogram_2.pdf>]
-<histogram_3.pdf, id=458, 397.485pt x 325.215pt>
+<histogram_3.pdf, id=466, 397.485pt x 325.215pt>
 File: histogram_3.pdf Graphic file (type pdf)
 <use histogram_3.pdf>
 Package pdftex.def Info: histogram_3.pdf  used on input line 844.
@@ -1934,7 +1934,7 @@ Package pdftex.def Info: histogram_3.pdf  used on input line 844.
  [70
 
  <./histogram_3.pdf>]
-<mse_0.pdf, id=472, 433.62pt x 289.08pt>
+<mse_0.pdf, id=481, 433.62pt x 289.08pt>
 File: mse_0.pdf Graphic file (type pdf)
 <use mse_0.pdf>
 Package pdftex.def Info: mse_0.pdf  used on input line 851.
@@ -1942,7 +1942,7 @@ Package pdftex.def Info: mse_0.pdf  used on input line 851.
  [71
 
  <./mse_0.pdf>]
-<mse_1.pdf, id=483, 433.62pt x 289.08pt>
+<mse_1.pdf, id=493, 433.62pt x 289.08pt>
 File: mse_1.pdf Graphic file (type pdf)
 <use mse_1.pdf>
 Package pdftex.def Info: mse_1.pdf  used on input line 851.
@@ -1950,7 +1950,7 @@ Package pdftex.def Info: mse_1.pdf  used on input line 851.
  [72
 
  <./mse_1.pdf>]
-<mse_2.pdf, id=494, 433.62pt x 289.08pt>
+<mse_2.pdf, id=505, 433.62pt x 289.08pt>
 File: mse_2.pdf Graphic file (type pdf)
 <use mse_2.pdf>
 Package pdftex.def Info: mse_2.pdf  used on input line 851.
@@ -1958,7 +1958,7 @@ Package pdftex.def Info: mse_2.pdf  used on input line 851.
  [73
 
  <./mse_2.pdf>]
-<mse_3.pdf, id=506, 433.62pt x 289.08pt>
+<mse_3.pdf, id=518, 433.62pt x 289.08pt>
 File: mse_3.pdf Graphic file (type pdf)
 <use mse_3.pdf>
 Package pdftex.def Info: mse_3.pdf  used on input line 851.
@@ -1988,7 +1988,7 @@ Package pdftex.def Info: illustration_3.pdf  used on input line 882.
  [80
 
 ]
-<illustration_loess.pdf, id=548, 289.08pt x 289.08pt>
+<illustration_loess.pdf, id=568, 289.08pt x 289.08pt>
 File: illustration_loess.pdf Graphic file (type pdf)
 <use illustration_loess.pdf>
 Package pdftex.def Info: illustration_loess.pdf  used on input line 882.
@@ -1996,7 +1996,7 @@ Package pdftex.def Info: illustration_loess.pdf  used on input line 882.
  [81
 
  <./illustration_loess.pdf>]
-<illustration_rpart.pdf, id=563, 289.08pt x 289.08pt>
+<illustration_rpart.pdf, id=583, 289.08pt x 289.08pt>
 File: illustration_rpart.pdf Graphic file (type pdf)
 <use illustration_rpart.pdf>
 Package pdftex.def Info: illustration_rpart.pdf  used on input line 882.
@@ -2008,7 +2008,7 @@ Package pdftex.def Info: illustration_rpart.pdf  used on input line 882.
 ] [84
 
 ]
-<code_simulate.png, id=589, 806.01125pt x 418.56375pt>
+<code_simulate.png, id=610, 806.01125pt x 418.56375pt>
 File: code_simulate.png Graphic file (type png)
 <use code_simulate.png>
 Package pdftex.def Info: code_simulate.png  used on input line 901.
@@ -2016,7 +2016,7 @@ Package pdftex.def Info: code_simulate.png  used on input line 901.
  [85
 
  <./code_simulate.png>]
-<challenge_data.pdf, id=598, 289.08pt x 216.81pt>
+<challenge_data.pdf, id=619, 289.08pt x 216.81pt>
 File: challenge_data.pdf Graphic file (type pdf)
 <use challenge_data.pdf>
 Package pdftex.def Info: challenge_data.pdf  used on input line 909.
@@ -2024,7 +2024,7 @@ Package pdftex.def Info: challenge_data.pdf  used on input line 909.
  [86
 
  <./challenge_data.pdf>]
-<challenge_line.pdf, id=613, 289.08pt x 216.81pt>
+<challenge_line.pdf, id=634, 289.08pt x 216.81pt>
 File: challenge_line.pdf Graphic file (type pdf)
 <use challenge_line.pdf>
 Package pdftex.def Info: challenge_line.pdf  used on input line 909.
@@ -2032,7 +2032,7 @@ Package pdftex.def Info: challenge_line.pdf  used on input line 909.
 [87
 
  <./challenge_line.pdf>]
-<challenge_forecast.pdf, id=629, 289.08pt x 216.81pt>
+<challenge_forecast.pdf, id=650, 289.08pt x 216.81pt>
 File: challenge_forecast.pdf Graphic file (type pdf)
 <use challenge_forecast.pdf>
 Package pdftex.def Info: challenge_forecast.pdf  used on input line 909.
@@ -2087,10 +2087,10 @@ r/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmssi8.pfb></usr
 local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/l
 ocal/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy9.pfb></usr/loc
 al/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/symbols/msam10.pfb>
-Output written on description_maxplanck.pdf (90 pages, 643883 bytes).
+Output written on description_maxplanck.pdf (90 pages, 644572 bytes).
 PDF statistics:
- 769 PDF objects out of 1000 (max. 8388607)
- 593 compressed objects within 6 object streams
+ 791 PDF objects out of 1000 (max. 8388607)
+ 614 compressed objects within 7 object streams
  183 named destinations out of 1000 (max. 500000)
  159 words of extra memory for PDF output out of 10000 (max. 10000000)
 
