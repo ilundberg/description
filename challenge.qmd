@@ -22,7 +22,7 @@ You might also discuss conceptual issues:
 
 * why might we be hesitant to carry out this extrapolation?
 
-## Example code to get you started
+## Example R code to get you started
 
 To run the code on this page, you will need the `tidyverse` package.
 
@@ -126,6 +126,41 @@ p3 <- p2 +
 
 ggsave("slides/challenge_line.pdf", plot = p2, height = 3, width = 4)
 ggsave("slides/challenge_forecast.pdf", plot = p3, height = 3, width = 4)
+```
+
+## Example Stata code to get you started
+
+First generate your learning dataset. Use the Stata code at the bottom of [Simulate Data](simulate.qmd). Save this file.
+
+```{r, eval = F}
+save learning
+```
+
+Then generate your dataset in which to make predictions.
+
+```{r, eval = F}
+use learning
+* Update the year to 2022
+replace year = 2022
+* Keep only the year and sex variables
+keep year sex
+* Keep only one observation in each group
+bysort year sex: gen index = _n
+keep if index == 1
+```
+
+Fit a regression model in the learning set.
+```{r, eval = F}
+clear all
+use learning
+reg log_income year##sex
+```
+
+Load the predict set and make predictions from that fitted model.
+```{r, eval = F}
+clear all
+use to_predict
+predict predicted
 ```
 
 ## What to try next

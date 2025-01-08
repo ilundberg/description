@@ -163,7 +163,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
    
   <ul>
   <li><a href="#things-you-might-discuss" id="toc-things-you-might-discuss" class="nav-link active" data-scroll-target="#things-you-might-discuss">Things you might discuss</a></li>
-  <li><a href="#example-code-to-get-you-started" id="toc-example-code-to-get-you-started" class="nav-link" data-scroll-target="#example-code-to-get-you-started">Example code to get you started</a></li>
+  <li><a href="#example-r-code-to-get-you-started" id="toc-example-r-code-to-get-you-started" class="nav-link" data-scroll-target="#example-r-code-to-get-you-started">Example R code to get you started</a></li>
+  <li><a href="#example-stata-code-to-get-you-started" id="toc-example-stata-code-to-get-you-started" class="nav-link" data-scroll-target="#example-stata-code-to-get-you-started">Example Stata code to get you started</a></li>
   <li><a href="#what-to-try-next" id="toc-what-to-try-next" class="nav-link" data-scroll-target="#what-to-try-next">What to try next</a></li>
   </ul>
 </nav>
@@ -209,8 +210,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li>why might we be hesitant to carry out this extrapolation?</li>
 </ul>
 </section>
-<section id="example-code-to-get-you-started" class="level2">
-<h2 class="anchored" data-anchor-id="example-code-to-get-you-started">Example code to get you started</h2>
+<section id="example-r-code-to-get-you-started" class="level2">
+<h2 class="anchored" data-anchor-id="example-r-code-to-get-you-started">Example R code to get you started</h2>
 <p>To run the code on this page, you will need the <code>tidyverse</code> package.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -256,6 +257,36 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </figure>
 </div>
 </div>
+</div>
+</section>
+<section id="example-stata-code-to-get-you-started" class="level2">
+<h2 class="anchored" data-anchor-id="example-stata-code-to-get-you-started">Example Stata code to get you started</h2>
+<p>First generate your learning dataset. Use the Stata code at the bottom of <a href="simulate.qmd">Simulate Data</a>. Save this file.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>save learning</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Then generate your dataset in which to make predictions.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>use learning</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="sc">*</span> Update the year to <span class="dv">2022</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>replace year <span class="ot">=</span> <span class="dv">2022</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="sc">*</span> Keep only the year and sex variables</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>keep year sex</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="sc">*</span> Keep only one observation <span class="cf">in</span> each group</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>bysort year sex<span class="sc">:</span> gen index <span class="ot">=</span> _n</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>keep <span class="cf">if</span> index <span class="sc">==</span> <span class="dv">1</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Fit a regression model in the learning set.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>clear all</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>use learning</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>reg log_income year<span class="do">##sex</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Load the predict set and make predictions from that fitted model.</p>
+<div class="cell" data-code-block-background="true">
+<pre class="eval cell-code"><code>clear all
+use to_predict
+predict predicted</code></pre>
 </div>
 </section>
 <section id="what-to-try-next" class="level2">
